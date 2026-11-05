@@ -335,6 +335,7 @@ function renderQueue() {
 async function copyOne(item) {
   const dir = await getDir(card.roms, item.system, true);
   const existed = await fileExists(dir, item.file.name);
+  item.existed = existed;
   let writable;
   try {
     const fh = await dir.getFileHandle(item.file.name, { create: true });
@@ -374,7 +375,15 @@ async function onCopyAll() {
   guardUnload(true);
   renderQueue();
   let ok = 0, bad = 0;
-  for (const item of ready.filter((q) => q.state === 'pending')) {
+  // Primero los .bin y después su .cue: si falta espacio para el disco, no queda un .cue suelto en la tarjeta.
+  const order = ready.filter((q) => q.state === 'pending').sort((a, b) => (b.owner ? 1 : 0) - (a.owner ? 1 : 0));
+  for (const item of order) {
+    if (item.state !== 'pending') continue;
+    const parts = queue.filter((q) => q.owner === item);
+    if (parts.some((q) => q.state === 'error')) {
+      item.state = 'error'; item.msg = 'No se copió porque faltaron archivos del disco.'; bad++;
+      continue;
+    }
     item.state = 'copying';
     renderQueue();
     await copyOne(item);
@@ -385,10 +394,19 @@ async function onCopyAll() {
       break;
     }
   }
+  // Si un disco quedó a medias, borrar las partes que sí se copiaron para no dejar juegos rotos.
+  for (const owner of queue.filter((q) => q.refs.length && q.state === 'error')) {
+    for (const part of queue.filter((q) => q.owner === owner && q.state === 'done' && !q.existed)) {
+      try { await (await getDir(card.roms, part.system)).removeEntry(part.file.name); } catch {}
+      part.state = 'error'; part.msg = 'Se borró de la tarjeta porque el disco no entró completo.';
+    }
+  }
   guardUnload(false);
   renderQueue();
-  if (bad) toast(`Se copiaron ${ok} juego(s), pero ${bad} fallaron. Mirá los mensajes en rojo.`, 'bad');
-  else toast(`Listo: se copiaron ${ok} juego(s). Cuando termines, expulsá la tarjeta (paso 3).`, 'ok');
+  ok = ready.filter((q) => q.state === 'done').length;
+  bad = ready.filter((q) => q.state === 'error').length;
+  if (bad) toast(`Se copiaron ${ok} archivo(s), pero ${bad} fallaron. Mirá los mensajes en rojo.`, 'bad');
+  else toast(`Listo: se copiaron ${ok} archivo(s). Cuando termines, expulsá la tarjeta (paso 3).`, 'ok');
 }
 
 // ---------- Quitar juegos ----------
