@@ -1,0 +1,112 @@
+/* Componentes propios del cargador K36, sobre Woodblock (woodblock/tokens.css y woodblock.css).
+   Siguen sus reglas: una sola tipografía, líneas de tinta de 1,5px, sin sombras ni esquinas redondeadas,
+   y el fuego solo para la acción principal. */
+
+.pg :focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
+
+/* Texto */
+.intro-k36 { max-width: var(--measure); padding-top: 2.5rem; }
+.intro-k36 .lead { margin: 0; }
+.sec .body { max-width: var(--measure); min-width: 0; }
+.sec .body > p, .sec .body li { text-wrap: pretty; }
+.sec .body > p { margin: 0 0 1.15rem; }
+.note { font-size: var(--text-sm); color: var(--ink-soft); }
+p.note { margin: .3rem 0 1rem; }
+code, pre { font-family: var(--mono); }
+code { font-size: .82em; background: rgba(31, 63, 102, .1); padding: .1em .32em; border-radius: 2px; }
+pre { margin: 1rem 0 1.25rem; padding: 1rem 1.2rem; background: var(--ink); color: var(--paper); font-size: .82rem; line-height: 1.6; overflow-x: auto; }
+.steps, .plain { margin: 0 0 1.4rem; padding-left: 1.3rem; }
+.steps li, .plain li { margin: .3rem 0; }
+.steps li::marker, .plain li::marker { color: var(--fire); }
+.sec .callout { margin: 0 0 1.75rem; }
+
+/* Avisos: un recuadro de tinta sobre papel claro. */
+.alert { margin: 2rem 0 0; padding: 1rem 1.2rem; max-width: var(--measure); background: var(--paper-light); border: var(--rule) solid var(--ink); }
+.alert p { margin: 0 0 .6rem; }
+.alert ul { margin: 0; padding-left: 1.3rem; }
+.alert li::marker { color: var(--fire); }
+.sec .alert { margin: 1rem 0; }
+
+.status { margin-top: 1rem; padding: .9rem 1.1rem; border: var(--rule) solid var(--ink); background: var(--paper-light); }
+.status b:first-child { font-weight: 700; }
+.status.bad b:first-child { color: var(--fire); }
+.status p { margin: 0 0 .3rem; }
+.status p:last-child { margin: 0; }
+
+/* Botones: papel claro con borde de tinta. El de la acción principal va en fuego. */
+.btn {
+  display: inline-flex; align-items: center; min-height: 44px; padding: .45rem 1.1rem;
+  border: var(--rule) solid var(--ink); border-radius: 0; background: var(--paper-light); color: var(--ink);
+  font: inherit; font-size: 1.05rem; cursor: pointer;
+}
+.btn:hover:not(:disabled) { background: var(--cart); }
+.btn.cta { background: var(--fire); color: var(--paper-light); font-weight: 700; }
+.btn.cta:hover:not(:disabled) { background: #A93A25; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; margin: 1rem 0; }
+
+/* Campos */
+select, input[type=search] {
+  min-height: 44px; padding: .35rem .7rem; border: var(--rule) solid var(--ink); border-radius: 0;
+  background: var(--paper-light); color: var(--ink); font: inherit; font-size: 1rem;
+}
+.actions select, .actions input[type=search] { flex: 1 1 14rem; }
+input[type=checkbox] { accent-color: var(--ink); width: 1.05rem; height: 1.05rem; }
+.check { display: flex; align-items: center; gap: .6rem; min-height: 44px; }
+
+/* Pestañas: los links de navegación de Woodblock, como botones. */
+.tabs { flex-wrap: wrap; gap: .25rem 1.75rem; margin: 0 0 1.25rem; border-bottom: var(--rule) solid var(--ink); }
+.tabs button {
+  padding: .6rem 0; border: 0; background: none; color: var(--ink); cursor: pointer; font: inherit; font-size: 1.05rem;
+  text-decoration-line: underline; text-decoration-thickness: .34em; text-underline-offset: .34em;
+  text-decoration-skip-ink: none; text-decoration-color: rgba(31, 63, 102, .18);
+}
+.tabs button:hover { text-decoration-color: rgba(31, 63, 102, .45); }
+.tabs button[aria-selected=true] { text-decoration-color: var(--water); font-weight: 700; }
+
+/* Zona para soltar archivos */
+.drop {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: 2rem 1rem;
+  border: var(--rule) dashed var(--ink); background: var(--paper-light); text-align: center; cursor: pointer;
+}
+.drop:hover, .drop.over { background: var(--cart); }
+.drop u { text-decoration-color: var(--water); text-decoration-thickness: var(--underline); text-underline-offset: var(--underline-offset); }
+
+/* Filas: lista con separadores finos, como la lista de textos de Woodblock. */
+.rows { list-style: none; margin: 1rem 0 0; padding: 0; }
+.rows:empty { display: none; }
+.rows > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .2rem 1rem; align-items: center; padding: .75rem 0; border-bottom: 1px solid var(--hairline); }
+.rows > li:first-child { border-top: var(--rule) solid var(--ink); }
+.rows .name { overflow-wrap: anywhere; }
+.rows .sub { font-size: var(--text-sm); color: var(--ink-soft); }
+.rows .sub.bad { color: var(--fire); }
+.rows .warn { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--ink-body); }
+.rows select { min-height: 38px; max-width: 16rem; }
+.rows .x { min-height: 38px; padding: 0 .4rem; border: 0; background: none; color: var(--ink-soft); font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: .2em; }
+.rows .x:hover { color: var(--ink); text-decoration-color: var(--ink); }
+.bar-k36 { grid-column: 1 / -1; height: 6px; border: 1px solid var(--ink); background: var(--paper-light); }
+.bar-k36 > i { display: block; height: 100%; width: 0; background: var(--earth); transition: width .15s; }
+
+.games { max-height: 26rem; overflow-y: auto; }
+.games > li { grid-template-columns: auto minmax(0, 1fr); cursor: pointer; padding: .55rem 0; }
+.games > li:hover { background: var(--paper-light); }
+.games label { display: contents; cursor: pointer; }
+
+/* Preguntas */
+details { margin: 0; }
+summary { cursor: pointer; padding: .6rem 0; font-weight: 600; }
+.sec .body > details { margin: .5rem 0 0; border-top: 1px solid var(--hairline); }
+.faq details { border-bottom: 1px solid var(--hairline); }
+.faq details:first-child { border-top: var(--rule) solid var(--ink); }
+details p { margin: 0 0 1rem; }
+
+/* Pie */
+.foot { padding-top: 1rem; padding-bottom: 2.5rem; }
+.foot p { margin: 0; padding-top: 1rem; border-top: var(--rule) solid var(--ink); font-size: var(--text-sm); color: var(--ink-soft); }
+
+/* Mensaje flotante: un cartucho con doble línea. */
+.toast {
+  position: fixed; left: 50%; bottom: 1.25rem; z-index: 10; transform: translateX(-50%);
+  max-width: min(36rem, 92vw); padding: .85rem 1.2rem; background: var(--cart); box-shadow: var(--double-rule);
+  font-size: 1.02rem;
+}

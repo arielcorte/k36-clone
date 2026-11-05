@@ -3,167 +3,235 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>K36 · Cargador de juegos para Batocera</title>
-<meta name="description" content="Agregá y quitá juegos de la tarjeta SD de una consola K36 con Batocera desde Windows, y respaldá tus partidas. Todo desde el navegador, sin instalar nada.">
+<title>Cargador de juegos K36</title>
+<meta name="description" content="Agregá y quitá juegos de la tarjeta SD de una consola K36 con Batocera desde Windows, y respaldá tus partidas. Funciona en el navegador, sin instalar nada.">
+<meta name="theme-color" content="#F2EADB">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Vollkorn:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<link rel="stylesheet" href="woodblock/tokens.css">
+<link rel="stylesheet" href="woodblock/woodblock.css">
+<link rel="stylesheet" href="k36.css">
 </head>
 <body>
-<header class="hero">
-  <div class="wrap">
-    <h1>🎮 Cargador de juegos K36</h1>
-    <p class="lead">Agregá y quitá juegos de la tarjeta SD de tu consola, y hacé una copia de tus partidas. Todo desde el navegador, sin instalar nada.</p>
-  </div>
-</header>
+<div class="pg">
+  <svg class="washi" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <filter id="mottle"><feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="8"/><feColorMatrix type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.30  -1.6 0 0 0 0.95"/></filter>
+    <filter id="fine"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="1" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0 0.2  0 0 0 0.05 0"/></filter>
+    <filter id="wood" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.0025 0.07" numOctaves="3" seed="3"/><feColorMatrix type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0.9 -0.32"/></filter>
+    <rect width="100%" height="100%" filter="url(#mottle)" opacity="0.12"/>
+    <rect width="100%" height="100%" filter="url(#fine)"/>
+  </svg>
 
-<main class="wrap">
+  <header class="shell bar">
+    <a class="wm" href="#">K36</a>
+    <nav aria-label="Secciones">
+      <ul class="nav">
+        <li><a class="air" href="#que-es">Qué es</a></li>
+        <li><a class="water" href="#preguntas">Preguntas</a></li>
+        <li><a class="earth" href="https://github.com/arielcorte/k36-clone">Código</a></li>
+      </ul>
+    </nav>
+  </header>
 
-  <!-- Aviso de navegador -->
-  <section id="browser-warning" class="card warn" hidden>
-    <h2>⚠️ Este navegador no puede abrir la tarjeta</h2>
-    <p>La página necesita permiso para leer y escribir en una carpeta de tu computadora, y este navegador no lo permite.</p>
-    <ul>
-      <li><strong>Lo más fácil:</strong> abrí esta misma página en <strong>Google Chrome</strong> o <strong>Microsoft Edge</strong>.</li>
-      <li id="brave-tip" hidden><strong>Si usás Brave:</strong> escribí <code>brave://flags/#file-system-access-api</code> en la barra de direcciones, cambialo a <em>Enabled</em> y reiniciá Brave.</li>
-      <li>Firefox y Safari no lo permiten.</li>
-    </ul>
-  </section>
+  <main class="shell">
+    <div class="plate band">
+      <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="g-k36" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0A040"/><stop offset="0.5" stop-color="#E0A040" stop-opacity="0"/></linearGradient>
+          <clipPath id="c-k36-screen"><rect x="646" y="66" width="108" height="80"/></clipPath>
+        </defs>
+        <rect width="1200" height="300" fill="#F6F0E2"/>
+        <rect width="1200" height="300" fill="url(#g-k36)"/>
+        <circle cx="905" cy="92" r="46" fill="#C2452D"/>
+        <path d="M0 262 Q 300 236 560 256 T 1200 248 V300 H0 Z" fill="#9FB49A"/>
+        <rect y="272" width="1200" height="28" fill="#6F8A63"/>
+        <!-- consola -->
+        <rect x="620" y="40" width="160" height="250" rx="16" fill="#F1DCC0"/>
+        <rect x="646" y="66" width="108" height="80" fill="#1F3F66"/>
+        <g clip-path="url(#c-k36-screen)">
+          <circle cx="730" cy="86" r="9" fill="#EDBE6A"/>
+          <path d="M646 132 L672 112 L694 126 L716 106 L754 130 V146 H646 Z" fill="#6F8A63"/>
+          <rect x="662" y="124" width="8" height="10" fill="#C2452D"/>
+        </g>
+        <path d="M655 180 h14 v-14 h14 v14 h14 v14 h-14 v14 h-14 v-14 h-14 Z" fill="#4F4740"/>
+        <circle cx="742" cy="172" r="8" fill="#6F8A63"/>
+        <circle cx="726" cy="187" r="8" fill="#1F3F66"/>
+        <circle cx="758" cy="187" r="8" fill="#C2452D"/>
+        <circle cx="742" cy="202" r="8" fill="#E0A040"/>
+        <circle cx="668" cy="246" r="17" fill="#4F4740"/>
+        <circle cx="732" cy="246" r="17" fill="#4F4740"/>
+        <rect x="686" y="218" width="12" height="5" rx="2.5" fill="#4F4740"/>
+        <rect x="702" y="218" width="12" height="5" rx="2.5" fill="#4F4740"/>
+        <!-- tarjeta SD -->
+        <path d="M842 196 h34 l10 10 v48 h-44 Z" fill="#F6F0E2"/>
+        <rect x="850" y="204" width="5" height="10" fill="#E0A040"/><rect x="859" y="204" width="5" height="10" fill="#E0A040"/><rect x="868" y="204" width="5" height="10" fill="#E0A040"/>
+        <g class="keys" fill="none" stroke="#1E1B18" stroke-width="2">
+          <rect x="620" y="40" width="160" height="250" rx="16"/>
+          <rect x="636" y="56" width="128" height="100" rx="4"/>
+          <rect x="646" y="66" width="108" height="80"/>
+          <path d="M655 180 h14 v-14 h14 v14 h14 v14 h-14 v14 h-14 v-14 h-14 Z"/>
+          <circle cx="742" cy="172" r="8"/><circle cx="726" cy="187" r="8"/><circle cx="758" cy="187" r="8"/><circle cx="742" cy="202" r="8"/>
+          <circle cx="668" cy="246" r="17"/><circle cx="732" cy="246" r="17"/><circle cx="668" cy="246" r="9"/><circle cx="732" cy="246" r="9"/>
+          <circle cx="905" cy="92" r="46"/>
+          <path d="M842 196 h34 l10 10 v48 h-44 Z"/>
+          <path d="M0 272 H620 M780 272 H1200"/>
+        </g>
+        <rect width="1200" height="300" filter="url(#wood)" opacity="0.6"/>
+      </svg>
+      <div class="cart"><h1>Cargador de juegos K36</h1></div>
+    </div>
 
-  <!-- Qué es -->
-  <section class="card">
-    <h2>¿Qué es esto?</h2>
-    <p>Es una herramienta para manejar los juegos de una consola portátil <strong>K36</strong> (el modelo clon con procesador Allwinner A33) que viene con <strong>Batocera</strong> de fábrica. Batocera es el sistema que corre la consola.</p>
-    <details>
-      <summary>¿Funciona con otras consolas? (detalle técnico)</summary>
-      <p>Funciona con cualquier consola con Batocera configurada para guardar los juegos y las partidas en una partición <strong>FAT32</strong>, que Windows puede leer. En la K36 esa partición se llama <code>GAMES</code>, y la configuración (<code>batocera-boot.conf</code>) tiene estas líneas:</p>
-      <pre>sharedevice=DEVICES
+    <section class="intro-k36">
+      <p class="lead">Agregá y quitá juegos de la tarjeta de la consola, y guardá una copia de tus partidas, desde Windows y sin instalar nada.</p>
+    </section>
+
+    <section id="browser-warning" class="alert" hidden>
+      <p><b>Este navegador no puede abrir la tarjeta.</b> La página necesita permiso para leer y escribir una carpeta de la computadora.</p>
+      <ul>
+        <li>Abrí esta misma dirección en Google Chrome o Microsoft Edge.</li>
+        <li id="brave-tip" hidden>En Brave se puede activar: escribí <code>brave://flags/#file-system-access-api</code> en la barra de direcciones, elegí <i>Enabled</i> y reiniciá el navegador.</li>
+        <li>Firefox y Safari no lo permiten.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="que-es" aria-labelledby="h-que-es">
+      <div class="sechead"><h2 id="h-que-es">Qué es</h2></div>
+      <div class="body">
+        <p>Una herramienta para la consola portátil K36 (el modelo clon con procesador Allwinner A33) que viene con Batocera de fábrica. Batocera es el sistema que corre en la consola.</p>
+        <p>Trabaja directamente sobre la tarjeta conectada a la computadora. No sube archivos a ningún lado y no descarga juegos: usá copias de juegos que tengas.</p>
+        <details>
+          <summary>Con qué consolas funciona</summary>
+          <p>Con cualquier Batocera que guarde los juegos y las partidas en una partición FAT32, que Windows puede leer. En la K36 esa partición se llama GAMES, y la configuración (<code>batocera-boot.conf</code>) tiene estas líneas:</p>
+          <pre>sharedevice=DEVICES
 sharedevice_part1=ROMS@/dev/mmcblk0p7:roms
 sharedevice_part2=SCREENSHOTS@/dev/mmcblk0p7:screenshots
 sharedevice_part3=THEMES@/dev/mmcblk0p7:themes
 sharedevice_part4=SAVES@/dev/mmcblk0p7:saves
 roms.download_enabled=1</pre>
-      <p>Las primeras líneas hacen que Batocera tome los juegos (<code>roms/</code>) de esa partición. Esta consola no traía la línea <code>SAVES</code> de fábrica: la agregamos para que las partidas también queden ahí y se puedan respaldar desde Windows. Con <code>roms.download_enabled=1</code>, lo que la consola escribe dentro de <code>roms/</code> (por ejemplo, las partidas <code>.srm</code>) termina en la carpeta <code>downloads/</code>.</p>
-      <p>La herramienta espera encontrar en la raíz de la tarjeta las carpetas <code>roms/</code>, <code>downloads/</code> y <code>saves/</code>. Las dos últimas son opcionales. Cada sistema tiene su carpeta dentro de <code>roms/</code> (<code>gba</code>, <code>snes</code>, <code>psx</code>…), igual que en cualquier Batocera.</p>
-    </details>
-    <p class="muted">🔒 Nada sale de tu computadora: la página no sube archivos a ningún lado. Tampoco descarga juegos. Usá copias de juegos que tengas.</p>
-  </section>
-
-  <!-- Paso 1 -->
-  <section class="card step" id="step-connect">
-    <h2><span class="num">1</span> Conectá la tarjeta</h2>
-    <ol class="howto">
-      <li>Apagá la consola y sacale la tarjeta microSD.</li>
-      <li>Ponela en el adaptador y conectalo a la computadora.</li>
-      <li>Windows va a mostrar <strong>varias unidades nuevas</strong>. La de los juegos se llama <strong>GAMES</strong>.</li>
-    </ol>
-    <div class="danger">
-      <strong>🛑 Muy importante:</strong> si Windows dice <em>“Es necesario formatear el disco antes de usarlo”</em>, tocá <strong>Cancelar</strong>. <strong>Nunca formatees.</strong> Esas particiones son del sistema de la consola. Windows no las puede leer, pero la consola las necesita para arrancar.
-    </div>
-    <button id="pick-root" class="btn primary big">📂 Elegir la unidad GAMES</button>
-    <p class="muted small">En la ventana que se abre, elegí la unidad <strong>GAMES</strong> (por ejemplo <code>GAMES (E:)</code>) y tocá <em>Seleccionar carpeta</em>. Si el navegador pregunta si permitís que la página vea y edite archivos, tocá <em>Permitir</em> o <em>Editar archivos</em>.</p>
-    <div id="pick-fallback" hidden class="info">
-      <p>Si el navegador no te deja elegir la unidad entera, abrí la unidad GAMES y elegí la carpeta <strong><code>roms</code></strong>:</p>
-      <button id="pick-roms" class="btn">📁 Elegir la carpeta roms</button>
-      <p class="small">Así vas a poder agregar y quitar juegos. Para respaldar partidas también vas a tener que elegir las carpetas <code>downloads</code> y <code>saves</code> cuando la página te lo pida.</p>
-    </div>
-    <div id="card-status" class="status" hidden></div>
-  </section>
-
-  <!-- Paso 2: acciones -->
-  <section class="card step" id="step-actions" hidden>
-    <h2><span class="num">2</span> ¿Qué querés hacer?</h2>
-    <div class="tabs" role="tablist">
-      <button class="tab active" data-tab="add" role="tab">➕ Agregar juegos</button>
-      <button class="tab" data-tab="remove" role="tab">🗑️ Quitar juegos</button>
-      <button class="tab" data-tab="backup" role="tab">💾 Respaldar partidas</button>
-    </div>
-
-    <!-- Agregar -->
-    <div class="panel" data-panel="add">
-      <p>Arrastrá los archivos de los juegos acá, o tocá el recuadro para elegirlos. La página se fija la extensión y los pone en la carpeta de la consola que corresponde. Si un archivo puede ser de varias consolas, te pregunta cuál.</p>
-      <label id="drop" class="drop" tabindex="0">
-        <input id="file-input" type="file" multiple hidden>
-        <span class="drop-icon">📥</span>
-        <span>Soltá los juegos acá o <u>tocá para elegirlos</u></span>
-        <span class="muted small">Por ejemplo <code>.gba</code>, <code>.sfc</code>, <code>.nes</code>, <code>.gb</code>, <code>.zip</code>, <code>.chd</code></span>
-      </label>
-      <div id="queue" class="queue"></div>
-      <div class="row" id="queue-actions" hidden>
-        <button id="copy-all" class="btn primary">Copiar a la tarjeta</button>
-        <button id="clear-queue" class="btn ghost">Vaciar lista</button>
-        <span id="queue-summary" class="muted"></span>
+          <p>Las primeras líneas hacen que Batocera tome los juegos (<code>roms/</code>) de esa partición. La línea <code>SAVES</code> no viene de fábrica: la agregamos para que las partidas también queden ahí y se puedan respaldar desde Windows. Con <code>roms.download_enabled=1</code>, lo que la consola escribe dentro de <code>roms/</code> (por ejemplo las partidas <code>.srm</code>) termina en <code>downloads/</code>.</p>
+          <p>La herramienta espera encontrar en la raíz de la partición las carpetas <code>roms/</code>, <code>downloads/</code> y <code>saves/</code>. Las dos últimas son opcionales. Dentro de <code>roms/</code> hay una carpeta por sistema (<code>gba</code>, <code>snes</code>, <code>psx</code>), como en cualquier Batocera.</p>
+        </details>
       </div>
-    </div>
+    </section>
 
-    <!-- Quitar -->
-    <div class="panel" data-panel="remove" hidden>
-      <p>Elegí una consola para ver sus juegos. Marcá los que quieras borrar y tocá <em>Borrar</em>.</p>
-      <div class="row">
-        <select id="remove-system"><option value="">Elegí una consola…</option></select>
-        <input id="remove-search" type="search" placeholder="🔎 Buscar por nombre…" disabled>
+    <section class="sec" id="paso-1" aria-labelledby="h-paso-1">
+      <div class="sechead"><h2 id="h-paso-1">1. Conectar la tarjeta</h2></div>
+      <div class="body">
+        <ol class="steps">
+          <li>Apagá la consola y sacale la tarjeta microSD.</li>
+          <li>Ponela en el adaptador y conectalo a la computadora.</li>
+          <li>Windows va a mostrar varias unidades nuevas. La de los juegos se llama GAMES.</li>
+        </ol>
+        <aside class="callout">
+          <p class="label">No formatees nada</p>
+          <p>Si Windows dice “Es necesario formatear el disco antes de usarlo”, elegí Cancelar. Esas particiones son del sistema de la consola: Windows no las puede leer, pero la consola las necesita para arrancar.</p>
+        </aside>
+        <p><button id="pick-root" class="btn">Elegir la unidad GAMES</button></p>
+        <p class="note">En la ventana que se abre, elegí la unidad GAMES (por ejemplo “GAMES (E:)”) y después Seleccionar carpeta. Si el navegador pregunta si la página puede ver y editar archivos, aceptá.</p>
+        <div id="pick-fallback" class="alert" hidden>
+          <p>Si el navegador no deja elegir la unidad entera, abrí la unidad GAMES y elegí la carpeta <code>roms</code>.</p>
+          <p><button id="pick-roms" class="btn">Elegir la carpeta roms</button></p>
+          <p class="note">Así se pueden agregar y quitar juegos. Para respaldar partidas, la página te va a pedir también las carpetas <code>downloads</code> y <code>saves</code>.</p>
+        </div>
+        <div id="card-status" class="status" hidden role="status"></div>
       </div>
-      <div id="remove-status" class="muted small"></div>
-      <div id="game-list" class="game-list"></div>
-      <div class="row" id="remove-actions" hidden>
-        <label class="check"><input type="checkbox" id="remove-backup" checked> Antes de borrar, guardar una copia de sus partidas</label>
-        <label class="check"><input type="checkbox" id="remove-saves"> Borrar también sus partidas de la tarjeta</label>
+    </section>
+
+    <section class="sec" id="paso-2" aria-labelledby="h-paso-2" hidden>
+      <div class="sechead"><h2 id="h-paso-2">2. Juegos y partidas</h2></div>
+      <div class="body">
+        <ul class="nav tabs" role="tablist">
+          <li><button class="water" data-tab="add" role="tab" aria-selected="true">Agregar juegos</button></li>
+          <li><button class="water" data-tab="remove" role="tab" aria-selected="false">Quitar juegos</button></li>
+          <li><button class="water" data-tab="backup" role="tab" aria-selected="false">Respaldar partidas</button></li>
+        </ul>
+
+        <div class="panel" data-panel="add" role="tabpanel">
+          <p>Arrastrá los archivos de los juegos al recuadro, o hacé clic para elegirlos. La página mira la extensión y pone cada juego en la carpeta de su consola. Si un archivo puede ser de varias consolas, te pregunta cuál.</p>
+          <label id="drop" class="drop" tabindex="0">
+            <input id="file-input" type="file" multiple hidden>
+            <span>Soltá los juegos acá o <u>elegilos de la computadora</u></span>
+            <span class="note">Por ejemplo <code>.gba</code>, <code>.sfc</code>, <code>.nes</code>, <code>.gb</code>, <code>.zip</code>, <code>.chd</code></span>
+          </label>
+          <ul id="queue" class="rows"></ul>
+          <div class="actions" id="queue-actions" hidden>
+            <button id="copy-all" class="btn cta">Copiar a la tarjeta</button>
+            <button id="clear-queue" class="btn">Vaciar la lista</button>
+            <span id="queue-summary" class="note"></span>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="remove" role="tabpanel" hidden>
+          <p>Elegí una consola para ver sus juegos, marcá los que quieras borrar y confirmá.</p>
+          <div class="actions">
+            <select id="remove-system" aria-label="Consola"><option value="">Elegí una consola</option></select>
+            <input id="remove-search" type="search" placeholder="Buscar por nombre" aria-label="Buscar por nombre" disabled>
+          </div>
+          <p id="remove-status" class="note" role="status"></p>
+          <ul id="game-list" class="rows games"></ul>
+          <div id="remove-actions" hidden>
+            <label class="check"><input type="checkbox" id="remove-backup" checked> Antes de borrar, descargar una copia de sus partidas</label>
+            <label class="check"><input type="checkbox" id="remove-saves"> Borrar también sus partidas de la tarjeta</label>
+            <div class="actions">
+              <button id="remove-go" class="btn cta" disabled>Borrar los marcados</button>
+              <span id="remove-summary" class="note"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="backup" role="tabpanel" hidden>
+          <p>Busca en la tarjeta las partidas y los estados guardados, y los junta en un archivo .zip que se descarga en la carpeta Descargas.</p>
+          <ul class="plain">
+            <li>Las partidas de los juegos (<code>.srm</code>, <code>.sav</code>) están en <code>downloads/</code> y a veces junto a los juegos, en <code>roms/</code>.</li>
+            <li>Los estados guardados y las partidas de PSP y N64 están en <code>saves/</code>.</li>
+          </ul>
+          <p><button id="backup-go" class="btn cta">Crear la copia</button></p>
+          <div id="backup-status" class="status" hidden role="status"></div>
+        </div>
       </div>
-      <div class="row" id="remove-actions-2" hidden>
-        <button id="remove-go" class="btn danger-btn" disabled>Borrar seleccionados</button>
-        <span id="remove-summary" class="muted"></span>
+    </section>
+
+    <section class="sec" id="paso-3" aria-labelledby="h-paso-3" hidden>
+      <div class="sechead"><h2 id="h-paso-3">3. Al terminar</h2></div>
+      <div class="body">
+        <ol class="steps">
+          <li>En Windows, abrí Este equipo, hacé clic derecho en la unidad GAMES y elegí Expulsar. Esperá el aviso de que se puede quitar: si la sacás antes, se pueden dañar archivos.</li>
+          <li>Poné la tarjeta en la consola y prendela.</li>
+          <li>Si los juegos nuevos no aparecen, reiniciá la consola o buscá Actualizar listas de juegos en el menú Start.</li>
+        </ol>
       </div>
-    </div>
+    </section>
 
-    <!-- Respaldar -->
-    <div class="panel" data-panel="backup" hidden>
-      <p>Busca en la tarjeta las partidas guardadas y los estados guardados, y los junta en un archivo <code>.zip</code> que se guarda en tu carpeta <strong>Descargas</strong>.</p>
-      <ul class="small">
-        <li>Partidas de los juegos (<code>.srm</code>, <code>.sav</code>…): en <code>downloads/</code> y junto a los juegos en <code>roms/</code>.</li>
-        <li>Estados guardados y partidas de PSP, N64 y otros: en <code>saves/</code>.</li>
-      </ul>
-      <button id="backup-go" class="btn primary">💾 Crear copia de las partidas</button>
-      <div id="backup-status" class="status" hidden></div>
-    </div>
-  </section>
+    <section class="sec" id="preguntas" aria-labelledby="h-preguntas">
+      <div class="sechead"><h2 id="h-preguntas">Preguntas</h2></div>
+      <div class="body faq">
+        <details><summary>Qué juegos andan bien en esta consola</summary>
+          <p>NES, Super Nintendo, Game Boy, Game Boy Color, Game Boy Advance, Sega Genesis, Master System, Neo-Geo, arcade y la mayoría de PlayStation 1 andan bien. Nintendo 64, PSP, Nintendo DS y Dreamcast andan mal o no andan: el procesador no da para más, con ningún sistema.</p>
+        </details>
+        <details><summary>La tarjeta se llenó</summary>
+          <p>Borrá los juegos que no uses desde Quitar juegos. Las carpetas de PSP, Nintendo DS y Dreamcast ocupan mucho y casi no se pueden jugar en esta consola.</p>
+        </details>
+        <details><summary>Juegos de PlayStation con archivos .cue y .bin</summary>
+          <p>Agregá todos los archivos del juego juntos. El <code>.cue</code> es el índice y los <code>.bin</code> son el disco. Un <code>.chd</code> es un solo archivo, más chico, y anda igual.</p>
+        </details>
+        <details><summary>Cómo restaurar una copia de partidas</summary>
+          <p>Descomprimí el .zip y copiá su contenido a la raíz de la unidad GAMES, aceptando reemplazar archivos. Las carpetas del .zip (<code>downloads</code>, <code>roms</code>, <code>saves</code>) son las mismas que las de la tarjeta.</p>
+        </details>
+        <details><summary>Archivos de más de 4 GB</summary>
+          <p>La partición GAMES es FAT32 y no admite archivos de más de 4 GB. Ningún juego que ande bien en esta consola pesa tanto.</p>
+        </details>
+      </div>
+    </section>
+  </main>
 
-  <!-- Paso 3 -->
-  <section class="card step" id="step-finish" hidden>
-    <h2><span class="num">3</span> Cuando termines</h2>
-    <ol class="howto">
-      <li>En Windows, abrí <em>Este equipo</em>, hacé clic derecho en la unidad <strong>GAMES</strong> y elegí <strong>Expulsar</strong>. Esperá el aviso de que es seguro quitarla. <span class="muted">(Si la sacás sin expulsar, se pueden dañar archivos.)</span></li>
-      <li>Poné la tarjeta en la consola y prendela.</li>
-      <li>Si no ves los juegos nuevos, apretá <strong>Start</strong> → <strong>Ajustes de juegos</strong> → <strong>Actualizar listas de juegos</strong>, o reiniciá la consola.</li>
-    </ol>
-  </section>
+  <footer class="shell foot">
+    <p>Hecho para la K36 con Batocera 42. Funciona en Chrome y Edge. El código está en <a class="ln earth" href="https://github.com/arielcorte/k36-clone">GitHub</a>.</p>
+  </footer>
 
-  <section class="card">
-    <h2>Preguntas frecuentes</h2>
-    <details><summary>¿Qué juegos andan bien en esta consola?</summary>
-      <p>Muy bien: NES, Super Nintendo, Game Boy / Color / Advance, Sega Genesis / Master System, Neo-Geo, arcade y la mayoría de PlayStation 1.<br>
-      Mal o no andan: Nintendo 64 (algunos), PSP, Nintendo DS y Dreamcast. El procesador no da para más, con cualquier sistema operativo.</p>
-    </details>
-    <details><summary>Me dice que la tarjeta está llena</summary>
-      <p>Borrá juegos que no uses desde <em>Quitar juegos</em>. Las carpetas de PSP, Nintendo DS y Dreamcast ocupan mucho y casi no se pueden jugar en esta consola.</p>
-    </details>
-    <details><summary>Un juego de PlayStation tiene un <code>.cue</code> y uno o varios <code>.bin</code></summary>
-      <p>Agregá todos los archivos juntos, en el mismo paso. El <code>.cue</code> es el índice y los <code>.bin</code> son el disco. Si te sobra espacio en la PC, convertirlos a <code>.chd</code> (un solo archivo, más chico) es mejor.</p>
-    </details>
-    <details><summary>¿Puedo restaurar una copia de partidas?</summary>
-      <p>Sí, a mano: descomprimí el <code>.zip</code> y copiá su contenido a la raíz de la unidad GAMES, aceptando reemplazar los archivos. Las carpetas del <code>.zip</code> (<code>downloads</code>, <code>roms</code>, <code>saves</code>) son las mismas que las de la tarjeta.</p>
-    </details>
-    <details><summary>Archivos de más de 4 GB</summary>
-      <p>La partición GAMES es FAT32 y no admite archivos de más de 4 GB. Ningún juego que ande bien en esta consola llega a ese tamaño.</p>
-    </details>
-  </section>
-
-  <div id="log" class="log" aria-live="polite"></div>
-</main>
-
-<footer class="wrap muted small">
-  Hecho para la K36 con Batocera 42. Funciona en Chrome y Edge. El código está en <a href="https://github.com/arielcorte/k36-clone">GitHub</a>.
-</footer>
-
-<div id="toast" class="toast" role="status" hidden></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+</div>
 <script type="module" src="app.js"></script>
 </body>
 </html>

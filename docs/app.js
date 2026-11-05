@@ -161,7 +161,7 @@ async function onPickRoot() {
   try {
     h = await pick('k36-games');
   } catch (e) {
-    status(st, `❌ ${esc(explainError(e))}<br>Probá con el botón <em>Elegir la carpeta roms</em> de abajo.`, 'bad');
+    status(st, `<b>No se pudo abrir.</b> ${esc(explainError(e))} Probá con el botón Elegir la carpeta roms, más abajo.`, 'bad');
     $('#pick-fallback').hidden = false;
     return;
   }
@@ -169,7 +169,7 @@ async function onPickRoot() {
   const roms = await getDir(h, 'roms');
   if (!roms) {
     if (h.name.toLowerCase() === 'roms') return useCard(null, h);
-    status(st, `❌ En <strong>${esc(h.name)}</strong> no hay una carpeta <code>roms</code>. ¿Elegiste la unidad <strong>GAMES</strong>? En la ventana, abrí <em>Este equipo</em> y elegí la unidad que se llama GAMES.`, 'bad');
+    status(st, `<b>Esa no es la unidad GAMES.</b> En ${esc(h.name || 'la carpeta elegida')} no hay una carpeta <code>roms</code>. En la ventana, abrí Este equipo y elegí la unidad que se llama GAMES.`, 'bad');
     $('#pick-fallback').hidden = false;
     return;
   }
@@ -181,14 +181,14 @@ async function onPickRoms() {
   try { h = await pick('k36-roms'); } catch (e) { return toast(explainError(e), 'bad'); }
   if (!h) return;
   if (h.name.toLowerCase() !== 'roms' && !(await getDir(h, 'gba')) && !(await getDir(h, 'snes'))) {
-    return status($('#card-status'), `❌ <strong>${esc(h.name)}</strong> no parece ser la carpeta <code>roms</code> de la consola.`, 'bad');
+    return status($('#card-status'), `<b>Esa no es la carpeta roms.</b> ${esc(h.name)} no tiene carpetas de consolas adentro.`, 'bad');
   }
   await useCard(null, h);
 }
 
 async function useCard(root, roms) {
   const st = $('#card-status');
-  status(st, '⏳ Revisando la tarjeta…');
+  status(st, 'Revisando la tarjeta…');
   card.root = root; card.roms = roms;
   card.downloads = await getDir(root, 'downloads');
   card.saves = await getDir(root, 'saves');
@@ -196,24 +196,24 @@ async function useCard(root, roms) {
   for await (const [name, h] of roms.entries()) if (h.kind === 'directory') folders.add(name);
   card.systems = SYSTEMS.filter((s) => folders.has(s[0]));
   if (!card.systems.length) {
-    return status(st, '❌ La carpeta <code>roms</code> no tiene carpetas de consolas (gba, snes…). ¿Es la tarjeta correcta?', 'bad');
+    return status(st, '<b>No encontré consolas.</b> La carpeta <code>roms</code> no tiene carpetas como <code>gba</code> o <code>snes</code>. ¿Es la tarjeta de la consola?', 'bad');
   }
   const savesNote = card.root
     ? (card.saves
-      ? '✓ Partidas: encontré <code>downloads/</code> y <code>saves/</code>.'
-      : '⚠️ No encontré la carpeta <code>saves/</code>. Las partidas de los juegos (en <code>downloads/</code>) se pueden respaldar igual. Los estados guardados quedan en una partición que Windows no puede leer.')
-    : 'ℹ️ Elegiste solo <code>roms</code>. Para respaldar partidas te voy a pedir las otras carpetas.';
-  status(st, `✅ <strong>Tarjeta lista.</strong> Encontré ${card.systems.length} consolas en <code>roms/</code>.<br>${savesNote}`, 'ok');
-  $('#pick-root').textContent = '🔄 Elegir otra vez';
-  $('#step-actions').hidden = false;
-  $('#step-finish').hidden = false;
+      ? 'También están las carpetas de partidas, <code>downloads/</code> y <code>saves/</code>.'
+      : 'No hay carpeta <code>saves/</code>. Las partidas de los juegos (en <code>downloads/</code>) se respaldan igual, pero los estados guardados quedan en una partición que Windows no puede leer.')
+    : 'Elegiste solo <code>roms</code>. Para respaldar partidas, la página te va a pedir las otras carpetas.';
+  status(st, `<p><b>Tarjeta lista.</b> Tiene carpetas para ${card.systems.length} consolas.</p><p>${savesNote}</p>`, 'ok');
+  $('#pick-root').textContent = 'Elegir otra unidad';
+  $('#paso-2').hidden = false;
+  $('#paso-3').hidden = false;
   fillRemoveSystems();
-  $('#step-actions').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('#paso-2').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---------- Pestañas ----------
 function showTab(name) {
-  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tabs button').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
   document.querySelectorAll('.panel').forEach((p) => (p.hidden = p.dataset.panel !== name));
 }
 
@@ -263,9 +263,9 @@ function linkDiscFiles() {
 function itemWarning(item) {
   if (item.state === 'error') return '';
   const notes = [];
-  if (item.system && WEAK.has(item.system)) notes.push(`⚠️ Los juegos de ${sysName(item.system)} suelen andar mal en esta consola.`);
+  if (item.system && WEAK.has(item.system)) notes.push(`Los juegos de ${sysName(item.system)} suelen andar mal en esta consola.`);
   const missing = item.refs.filter((r) => !queue.some((q) => q.file.name === r));
-  if (missing.length && item.ext === 'cue') notes.push(`⚠️ Este .cue necesita también: ${missing.join(', ')}. Agregalos en el mismo paso.`);
+  if (missing.length && item.ext === 'cue') notes.push(`Este .cue necesita también ${missing.join(', ')}. Agregalos en el mismo paso.`);
   return notes.join(' ');
 }
 
@@ -273,24 +273,24 @@ function renderQueue() {
   const box = $('#queue');
   box.innerHTML = '';
   queue.forEach((item, i) => {
-    const el = document.createElement('div');
+    const el = document.createElement('li');
     const needs = item.state === 'pending' && !item.system;
-    el.className = `item ${item.state === 'done' ? 'done' : item.state === 'error' ? 'error' : needs ? 'needs' : ''}`;
+    if (needs) el.className = 'needs';
     let right = '';
     if (item.state === 'pending' && item.candidates.length > 1) {
-      right = `<select data-i="${i}"><option value="">¿De qué consola es?</option>${item.candidates
+      right = `<select data-i="${i}" aria-label="Consola de ${esc(item.file.name)}"><option value="">¿De qué consola es?</option>${item.candidates
         .map((c) => `<option value="${c}" ${c === item.system ? 'selected' : ''}>${esc(sysName(c))}</option>`).join('')}</select>`;
-    } else if (item.state === 'pending' && item.system) {
-      right = `<span class="meta">→ ${esc(sysName(item.system))}</span>`;
     }
-    if (item.state === 'pending' || item.state === 'error') right += ` <button class="x" title="Quitar de la lista" data-del="${i}">✕</button>`;
+    if (item.state === 'pending' || item.state === 'error') right += ` <button class="x" data-del="${i}">Quitar</button>`;
     const stateText = {
-      pending: needs ? '👉 Elegí la consola' : 'Listo para copiar',
-      copying: '⏳ Copiando…', done: `✅ Copiado a roms/${item.system}/`, skipped: '⏭️ Salteado (ya estaba en la tarjeta)', error: `❌ ${item.msg}`,
+      pending: item.system ? `Va a ${sysName(item.system)}` : 'Elegí la consola',
+      copying: 'Copiando…', done: `Copiado a roms/${item.system}/`, skipped: 'Salteado: ya estaba en la tarjeta', error: item.msg,
     }[item.state];
+    const warn = itemWarning(item);
     el.innerHTML = `<div><div class="name">${esc(item.file.name)}</div>
-      <div class="meta">${fmtSize(item.file.size)} · ${stateText} ${esc(itemWarning(item))}</div></div>
-      <div>${right}</div><div class="bar"><i style="width:${item.state === 'done' ? 100 : item.progress || 0}%"></i></div>`;
+      <div class="sub ${item.state === 'error' || needs ? 'bad' : ''}">${fmtSize(item.file.size)} · ${esc(stateText)}</div></div>
+      <div>${right}</div>${warn ? `<div class="warn">${esc(warn)}</div>` : ''}
+      ${['copying', 'done'].includes(item.state) ? `<div class="bar-k36"><i style="width:${item.state === 'done' ? 100 : item.progress || 0}%"></i></div>` : ''}`;
     item.el = el;
     box.append(el);
   });
@@ -319,7 +319,7 @@ async function copyOne(item) {
       await writable.write(value);
       done += value.byteLength;
       item.progress = Math.round((done / item.file.size) * 100);
-      if (Date.now() - lastPaint > 150) { item.el.querySelector('.bar i').style.width = `${item.progress}%`; lastPaint = Date.now(); }
+      if (Date.now() - lastPaint > 150) { item.el.querySelector('.bar-k36 i').style.width = `${item.progress}%`; lastPaint = Date.now(); }
     }
     await writable.close();
     item.state = 'done';
@@ -360,7 +360,7 @@ async function onCopyAll() {
   guardUnload(false);
   renderQueue();
   if (bad) toast(`Se copiaron ${ok} juego(s), pero ${bad} fallaron. Mirá los mensajes en rojo.`, 'bad');
-  else toast(`✅ Listo: se copiaron ${ok} juego(s). Cuando termines, expulsá la tarjeta (paso 3).`, 'ok');
+  else toast(`Listo: se copiaron ${ok} juego(s). Cuando termines, expulsá la tarjeta (paso 3).`, 'ok');
 }
 
 // ---------- Quitar juegos ----------
@@ -368,7 +368,7 @@ let games = []; const selected = new Set(); let scanToken = 0;
 
 function fillRemoveSystems() {
   const sel = $('#remove-system');
-  sel.innerHTML = '<option value="">Elegí una consola…</option>' + card.systems
+  sel.innerHTML = '<option value="">Elegí una consola</option>' + card.systems
     .slice().sort((a, b) => a[1].localeCompare(b[1], 'es'))
     .map((s) => `<option value="${s[0]}">${esc(s[1])} (${s[0]})</option>`).join('');
 }
@@ -388,7 +388,7 @@ async function scanSystem(folder) {
       if (token !== scanToken) return;
       if (SKIP_FILES.has(f.name.toLowerCase()) || !exts.has(extOf(f.name)) || SAVE_RE.test(f.name)) continue;
       found.push({ ...f, where, key: `${where}/${[...f.path, f.name].join('/')}`, parts: [] });
-      if (++n % 200 === 0) info.textContent = `⏳ Buscando juegos… ${n} encontrados`;
+      if (++n % 200 === 0) info.textContent = `Buscando juegos… van ${n}.`;
     }
   }
   // Agrupa los .bin que pertenecen a un .cue/.m3u de la misma carpeta.
@@ -417,12 +417,13 @@ function renderGames() {
   const list = $('#game-list');
   const shown = games.filter((g) => !q || norm(g.name).includes(q) || norm(g.path.join('/')).includes(q));
   const LIMIT = 400;
-  list.innerHTML = shown.slice(0, LIMIT).map((g) => `<label class="game">
-      <input type="checkbox" data-key="${esc(g.key)}" ${selected.has(g.key) ? 'checked' : ''}>
-      <span><span>${esc(g.name)}</span>
-      <span class="sub"><br>${esc([g.where, card.roms && g.path.length ? g.path.join('/') : ''].filter(Boolean).join(' · '))}${g.parts.length ? ` · +${g.parts.length} archivo(s) del disco` : ''}</span></span></label>`).join('')
-    + (shown.length > LIMIT ? `<div class="game muted">Mostrando ${LIMIT} de ${shown.length}. Usá el buscador para encontrar el resto.</div>` : '');
-  $('#remove-actions').hidden = $('#remove-actions-2').hidden = !games.length;
+  list.innerHTML = shown.slice(0, LIMIT).map((g) => {
+    const where = [g.where === 'downloads' ? 'agregado desde la consola' : '', g.path.join('/'), g.parts.length ? `${g.parts.length + 1} archivos` : '']
+      .filter(Boolean).join(' · ');
+    return `<li><label><input type="checkbox" data-key="${esc(g.key)}" ${selected.has(g.key) ? 'checked' : ''}>
+      <span><span class="name">${esc(g.name)}</span>${where ? `<br><span class="sub">${esc(where)}</span>` : ''}</span></label></li>`;
+  }).join('') + (shown.length > LIMIT ? `<li class="sub">Se muestran ${LIMIT} de ${shown.length}. Usá el buscador para encontrar el resto.</li>` : '');
+  $('#remove-actions').hidden = !games.length;
   $('#remove-go').disabled = busy || !selected.size;
   $('#remove-summary').textContent = selected.size ? `${selected.size} seleccionado(s)` : '';
 }
@@ -454,7 +455,7 @@ async function onRemove() {
   if (!chosen.length) return;
   const wantBackup = $('#remove-backup').checked;
   const wantSaves = $('#remove-saves').checked;
-  const msg = `¿Borrar ${chosen.length} juego(s) de ${sysName(folder)}?\n\n${chosen.slice(0, 8).map((g) => '• ' + g.name).join('\n')}${chosen.length > 8 ? '\n…' : ''}\n\n${wantSaves ? '⚠️ También se van a borrar sus partidas.' : 'Sus partidas quedan en la tarjeta.'}\nEsto no se puede deshacer.`;
+  const msg = `¿Borrar ${chosen.length} juego(s) de ${sysName(folder)}?\n\n${chosen.slice(0, 8).map((g) => '• ' + g.name).join('\n')}${chosen.length > 8 ? '\n…' : ''}\n\n${wantSaves ? 'También se van a borrar sus partidas.' : 'Sus partidas quedan en la tarjeta.'}\nEsto no se puede deshacer.`;
   if (!confirm(msg)) return;
   guardUnload(true); renderGames();
   const info = $('#remove-status');
@@ -462,7 +463,7 @@ async function onRemove() {
     const saves = [];
     for (const g of chosen) saves.push(...(await savesFor(g, folder)));
     if (wantBackup && saves.length) {
-      info.textContent = `⏳ Guardando copia de ${saves.length} partida(s)…`;
+      info.textContent = `Guardando una copia de ${saves.length} partida(s)…`;
       const entries = [];
       for (const s of saves) { const f = await s.handle.getFile(); entries.push({ path: s.rel, data: new Uint8Array(await f.arrayBuffer()), mtime: f.lastModified }); }
       download(makeZip(entries), `partidas-${folder}-${today()}.zip`);
@@ -478,7 +479,7 @@ async function onRemove() {
     if (wantSaves) for (const s of saves) { try { await s.dir.removeEntry(s.name); } catch {} }
     const backupNote = wantBackup && saves.length ? ` Se descargó una copia de ${saves.length} partida(s) en tu carpeta Descargas.` : '';
     if (failed.length) toast(`Se borraron ${removed}, fallaron ${failed.length}: ${failed[0]}`, 'bad');
-    else toast(`🗑️ Se borraron ${removed} juego(s).${backupNote}`, 'ok');
+    else toast(`Se borraron ${removed} juego(s).${backupNote}`, 'ok');
   } catch (e) {
     toast(explainError(e), 'bad');
   }
@@ -506,20 +507,20 @@ async function onBackup() {
       if (!dir) return;
       let n = 0;
       for await (const f of walk(dir, [], where !== 'saves')) {
-        if (++n % 300 === 0) status(st, `⏳ Revisando <code>${where}/</code>… ${n} archivos (encontré ${found.length} partidas)`);
+        if (++n % 300 === 0) status(st, `Revisando <code>${where}/</code>: ${n} archivos, ${found.length} partidas encontradas.`);
         if (filter(f.name)) found.push({ ...f, rel: [where, ...f.path, f.name].join('/') });
       }
     };
-    status(st, '⏳ Revisando <code>saves/</code>…');
+    status(st, 'Revisando <code>saves/</code>…');
     await scan('saves', card.saves, (n) => !SKIP_FILES.has(n.toLowerCase()));
-    status(st, '⏳ Revisando <code>downloads/</code>…');
+    status(st, 'Revisando <code>downloads/</code>…');
     await scan('downloads', card.downloads, (n) => SAVE_RE.test(n));
-    status(st, '⏳ Revisando <code>roms/</code> (puede tardar un par de minutos)…');
+    status(st, 'Revisando <code>roms/</code>. Con muchos juegos puede tardar un par de minutos.');
     await scan('roms', card.roms, (n) => SAVE_RE.test(n));
     if (!found.length) {
-      status(st, 'ℹ️ No encontré partidas guardadas en la tarjeta. Si recién empezaste a jugar, puede que todavía no haya ninguna.');
+      status(st, '<b>No hay partidas.</b> No encontré partidas guardadas en la tarjeta. Si recién empezaste a jugar, puede que todavía no haya ninguna.');
     } else {
-      status(st, `⏳ Armando el .zip con ${found.length} archivos…`);
+      status(st, `Armando el .zip con ${found.length} archivos…`);
       const entries = []; let total = 0;
       for (const f of found) {
         const file = await f.handle.getFile();
@@ -530,12 +531,12 @@ async function onBackup() {
       download(makeZip(entries), name);
       const bySys = {};
       for (const f of found) { const s = f.rel.split('/')[1] || '?'; bySys[s] = (bySys[s] || 0) + 1; }
-      status(st, `✅ <strong>Copia lista:</strong> ${found.length} archivos (${fmtSize(total)}) en <strong>${name}</strong>, en tu carpeta <strong>Descargas</strong>.<br>
-        <span class="small">${Object.entries(bySys).sort().map(([s, n]) => `${esc(sysName(s))}: ${n}`).join(' · ')}</span>`, 'ok');
-      toast('✅ Copia de partidas descargada.', 'ok');
+      status(st, `<p><b>Copia lista.</b> ${found.length} archivos (${fmtSize(total)}) en ${name}, en la carpeta Descargas.</p>
+        <p class="note">${Object.entries(bySys).sort().map(([s, n]) => `${esc(sysName(s))}: ${n}`).join(' · ')}</p>`, 'ok');
+      toast('Se descargó la copia de las partidas.', 'ok');
     }
   } catch (e) {
-    status(st, `❌ ${esc(explainError(e))}`, 'bad');
+    status(st, `<b>No se pudo.</b> ${esc(explainError(e))}`, 'bad');
   }
   guardUnload(false); $('#backup-go').disabled = false;
 }
@@ -543,7 +544,7 @@ async function onBackup() {
 // ---------- Eventos ----------
 $('#pick-root').addEventListener('click', onPickRoot);
 $('#pick-roms').addEventListener('click', onPickRoms);
-document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+document.querySelectorAll('.tabs button').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
 
 const drop = $('#drop');
 $('#file-input').addEventListener('change', (e) => { addFiles([...e.target.files]); e.target.value = ''; });

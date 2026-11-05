@@ -1,0 +1,59 @@
+/* Woodblock tokens: woodblock prints on washi paper.
+   Every value here is used by woodblock.css; change them here, not there. */
+
+:root {
+  /* Ink and paper */
+  --ink: #1E1B18;          /* text, rules, frames, key-block lines */
+  --ink-soft: #4F4740;     /* secondary text: dates, labels, captions */
+  --ink-body: #3A342E;     /* long supporting lines (timeline) */
+  --hairline: rgba(30, 27, 24, .18); /* list and table dividers */
+  --desk: #EDE3D0;         /* behind the sheet (html background, overscroll) */
+  --paper: #F2EADB;        /* the sheet */
+  --paper-light: #F6F0E2;  /* inside plates, buttons, inset panels */
+  --cart: #F1DCC0;         /* cartouche: title labels, callouts, quotes */
+
+  /* The four elements. Each one marks a kind of link (see README). */
+  --air: #E0A040;    /* about, people, contact links */
+  --earth: #6F8A63;  /* works, things made */
+  --water: #1F3F66;  /* writing, reading, focus rings */
+  --fire: #C2452D;   /* the one call to action, list markers, todos */
+  --air-light: #EDBE6A; /* warm fill behind portraits and inside prints */
+
+  /* Activity ramp (contribution graph), paper to deep earth */
+  --ramp-0: #E9DFC9;
+  --ramp-1: #C9D1B0;
+  --ramp-2: #9DB08A;
+  --ramp-3: #6F8A63;
+  --ramp-4: #34503F;
+
+  /* Type: one face for everything but code */
+  --serif: 'Vollkorn', Georgia, serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --text: 1.12rem;     /* body */
+  --text-sm: .95rem;   /* dates, labels, legends */
+  --text-lead: 1.5rem; /* first paragraph of an intro */
+  --text-h2: 1.7rem;
+  --text-title: clamp(2rem, 5vw, 3rem);     /* cartouche title */
+  --text-post: clamp(2.2rem, 6.5vw, 3.3rem); /* article title */
+  --leading: 1.6;
+  --leading-prose: 1.7;
+
+  /* Lines. Hierarchy comes from rules and frames, never shadows. */
+  --rule: 1.5px;
+  /* Double ink rule: outer line, a gap of the fill color, inner line. */
+  --double-rule: 0 0 0 var(--rule) var(--ink), inset 0 0 0 4px var(--cart), inset 0 0 0 5.5px var(--ink);
+
+  /* Link underlines: thick, offset, never skipping descenders */
+  --underline: 2px;
+  --underline-bold: 3px;
+  --underline-offset: .22em;
+
+  /* Layout */
+  --shell: 72rem;     /* page width */
+  --measure: 40rem;   /* reading width */
+  --side: 14rem;      /* heading column on wide screens */
+  --gutter: 4rem;     /* between heading column and content */
+}
+
+/* Breakpoints (custom properties don't work in media queries, so for reference):
+   40rem phone, 48rem shell padding, 56rem two columns, 64rem margin aside, 94rem wide extras. */

@@ -1,0 +1,344 @@
+/* Woodblock components. Load tokens.css first.
+   Sections: base, page, header, plates and cartouches, links, home grid,
+   sections and lists, series, callout, timeline, article and prose, code, pager, notice. */
+
+/* ---------- Base ---------- */
+html { background: var(--desk); }
+body { margin: 0; }
+a { color: var(--ink); }
+
+/* The sheet. Everything sits inside one .pg. */
+.pg {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: var(--text);
+  line-height: var(--leading);
+}
+.pg ::selection { background: rgba(224, 160, 64, .35); }
+/* Washi texture: an absolutely positioned SVG using the filters in svg/filters.svg. */
+.washi { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.shell { position: relative; box-sizing: border-box; width: 100%; max-width: var(--shell); margin: 0 auto; padding: 0 1rem; }
+main.shell { flex: 1 0 auto; padding-bottom: 5rem; }
+@media (min-width: 48rem) { .shell { padding: 0 2rem; } }
+
+/* ---------- Element links ----------
+   Every link is underlined, thick, offset, and colored by what it leads to. */
+.air { text-decoration-color: var(--air); }
+.earth { text-decoration-color: var(--earth); }
+.water { text-decoration-color: var(--water); }
+.fire { text-decoration-color: var(--fire); }
+.ln { text-decoration-thickness: var(--underline); text-underline-offset: var(--underline-offset); }
+.ln-bold { display: inline-block; padding: .45rem 0; text-decoration-thickness: var(--underline-bold); text-underline-offset: .24em; text-decoration-skip-ink: none; }
+.more { display: inline-block; padding: .4rem 0; text-decoration-thickness: var(--underline-bold); text-underline-offset: .3em; }
+.more::after { content: "→"; display: inline-block; margin-left: .45rem; transition: transform .2s ease; }
+.more:hover::after { transform: translateX(3px); }
+
+/* ---------- Header ---------- */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 1.5rem; padding-top: .9rem; padding-bottom: .9rem; }
+.wm { font-size: 1.2rem; font-weight: 700; text-decoration: none; padding: .5rem 0; }
+.nav { display: flex; gap: 1.5rem; margin: 0; padding: 0; list-style: none; }
+/* Nav links: a wide translucent element stroke that goes solid on hover and on the current page. */
+.nav a {
+  display: inline-block;
+  padding: .6rem 0;
+  font-size: 1.05rem;
+  text-decoration-line: underline;
+  text-decoration-thickness: .34em;
+  text-underline-offset: .34em;
+  text-decoration-skip-ink: none;
+}
+.nav .air { text-decoration-color: rgba(224, 160, 64, .35); }
+.nav .earth { text-decoration-color: rgba(111, 138, 99, .35); }
+.nav .water { text-decoration-color: rgba(31, 63, 102, .25); }
+.nav .fire { text-decoration-color: rgba(194, 69, 45, .3); }
+.nav .air[aria-current], .nav .air:hover { text-decoration-color: var(--air); }
+.nav .earth[aria-current], .nav .earth:hover { text-decoration-color: var(--earth); }
+.nav .water[aria-current], .nav .water:hover { text-decoration-color: var(--water); }
+.nav .fire[aria-current], .nav .fire:hover { text-decoration-color: var(--fire); }
+
+/* ---------- Plates and cartouches ---------- */
+/* Plate: a print in a single ink frame. Holds an <img> or a full-bleed <svg>. */
+.plate { position: relative; border: var(--rule) solid var(--ink); background: var(--paper-light); overflow: hidden; }
+.plate > svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.plate > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.band { z-index: 2; height: clamp(12rem, 24vw, 17rem); } /* page banner */
+.strip { height: clamp(5rem, 9vw, 7rem); }                /* thin banner above articles */
+
+/* Cartouche: the title label printed onto a plate, with a double ink rule. */
+.cart {
+  position: absolute;
+  left: clamp(.9rem, 4%, 3rem);
+  bottom: clamp(.9rem, 8%, 1.5rem);
+  box-sizing: border-box;
+  padding: .9rem 1.1rem .85rem;
+  background: var(--cart);
+  box-shadow: var(--double-rule);
+}
+.cart.mid { top: 50%; bottom: auto; transform: translateY(-50%); }
+.cart h1 { margin: 0; font-weight: 700; font-size: var(--text-title); line-height: 1; }
+
+/* Portrait: a round photo with a paper ring and an ink ring. */
+.portrait {
+  width: 10.5rem;
+  aspect-ratio: 1;
+  margin: 5.5px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--air-light);
+  box-shadow: 0 0 0 4px var(--paper), 0 0 0 5.5px var(--ink);
+}
+.portrait img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Home grid ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "photo" "intro" "links" "graph"; gap: 2rem; padding-top: 2.75rem; }
+.hero .portrait { grid-area: photo; }
+.hero .intro { grid-area: intro; }
+.hero .colophon { grid-area: links; }
+.hero .contrib { grid-area: graph; }
+@media (min-width: 56rem) {
+  .hero { grid-template-columns: var(--side) minmax(0, 1fr); grid-template-areas: "photo intro" "links graph"; gap: 1.5rem var(--gutter); padding-top: 1.75rem; }
+  .hero .portrait { width: calc(100% - 11px); }
+}
+.intro { max-width: var(--measure); }
+.intro p { margin: 0 0 1.4rem; line-height: var(--leading-prose); text-wrap: pretty; }
+/* Lead: the first paragraph is larger and bold. No other display type. */
+.lead, .intro > p:first-child { margin-bottom: 1.2rem; font-size: var(--text-lead); font-weight: 700; line-height: 1.3; text-wrap: balance; }
+
+/* Colophon: a term/value list under a rule. */
+.colophon {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .2rem 1.1rem;
+  align-content: start;
+  font-size: 1.02rem;
+  border-top: var(--rule) solid var(--ink);
+  padding-top: .9rem;
+}
+.colophon dt { font-size: var(--text-sm); color: var(--ink-soft); padding-top: .3rem; }
+.colophon dd { margin: 0; }
+.colophon a { margin-right: 1rem; }
+
+/* Copy button: shows on hover next to an email, always on touch screens. */
+.email { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
+.email a { margin-right: 0 !important; }
+.copy {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: var(--rule) solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper-light);
+  color: var(--ink);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s ease, background .15s ease;
+}
+.email:hover .copy, .email:focus-within .copy, .copy.is-done { opacity: 1; }
+.copy:hover { background: var(--cart); }
+.copy:focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
+@media (hover: none) { .copy { opacity: 1; } }
+.copy svg { width: 1rem; height: 1rem; }
+.copy .done:empty { display: none; }
+.copy .done {
+  position: absolute;
+  bottom: calc(100% + .4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: .2rem .5rem;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--paper-light);
+  font-family: var(--serif);
+  font-size: .85rem;
+  white-space: nowrap;
+}
+
+/* Contribution graph: a lighter panel with a faint inner rule. */
+.contrib {
+  align-self: start;
+  margin: 0;
+  padding: 1rem 1.1rem .85rem;
+  background: var(--paper-light);
+  border: var(--rule) solid var(--ink);
+  box-shadow: inset 0 0 0 4px var(--paper-light), inset 0 0 0 5.5px rgba(30, 27, 24, .35);
+}
+.gwrap { overflow-x: auto; direction: rtl; } /* scrolled to the most recent weeks */
+.gwrap svg { direction: ltr; display: block; width: 100%; min-width: 38rem; height: auto; }
+.contrib figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-top: .7rem; font-size: 1rem; color: var(--ink-soft); }
+.contrib b { font-weight: 700; font-size: 1.15rem; color: var(--ink); }
+.legend { display: inline-flex; align-items: center; gap: .25rem; font-size: var(--text-sm); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; }
+
+/* Placeholder for content not written yet. Never ship one. */
+.todo { padding: .8rem 1rem; border: var(--rule) dashed var(--fire); font-size: 1rem !important; }
+
+/* ---------- Sections and lists ---------- */
+/* Section: a ruled heading column beside the content. Also used for year groups. */
+.sec { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem var(--gutter); padding-top: 4rem; }
+@media (min-width: 56rem) { .sec { grid-template-columns: var(--side) minmax(0, 1fr); } }
+.sechead { border-top: var(--rule) solid var(--ink); padding-top: .9rem; }
+.sechead h2 { margin: 0; font-weight: 700; font-size: var(--text-h2); line-height: 1.15; }
+.sechead a { display: inline-block; margin-top: .5rem; padding: .4rem 0; font-size: 1rem; text-decoration-thickness: var(--underline); text-underline-offset: var(--underline-offset); }
+.sec.year { padding-top: 3rem; gap: .5rem var(--gutter); }
+.year .sechead h2 { margin-top: .1rem; font-size: 2.2rem; line-height: 1.05; color: var(--water); }
+
+/* Post list: date column, title links that underline on hover. */
+.posts { list-style: none; margin: 0; padding: 0; max-width: 44rem; }
+.posts li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0 1rem; align-items: baseline; border-bottom: 1px solid var(--hairline); }
+.posts time { font-size: var(--text-sm); color: var(--ink-soft); }
+.posts a { display: block; padding: .8rem 0; font-size: 1.25rem; line-height: 1.35; text-decoration: none; }
+.posts a:hover { text-decoration: underline; text-decoration-color: var(--water); text-decoration-thickness: var(--underline); text-underline-offset: var(--underline-offset); }
+
+/* ---------- Series: numbered prints ---------- */
+.series { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 2.75rem 2rem; }
+.series.compact { grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 2rem 1.5rem; }
+.piece a { display: block; text-decoration: none; }
+.piece .art { aspect-ratio: 3 / 4; }
+/* The key block (ink lines) slips out of register on hover, like a misprint. */
+.piece .keys { transition: transform .35s ease; }
+.piece a:hover .keys, .piece a:focus-visible .keys { transform: translate(5px, 4px); }
+.piece a:focus-visible { outline: 3px solid var(--water); outline-offset: 4px; }
+/* Number tag: a vertical cartouche in the corner. */
+.no {
+  position: absolute;
+  top: .7rem;
+  right: .7rem;
+  padding: .5rem .32rem;
+  background: var(--cart);
+  box-shadow: 0 0 0 var(--rule) var(--ink);
+  font-size: .85rem;
+  line-height: 1;
+  writing-mode: vertical-rl;
+}
+.piece h2, .piece h3 { margin: .8rem 0 0; font-weight: 700; font-size: 1.4rem; line-height: 1.25; }
+.piece small { display: block; font-size: 1rem; font-style: normal; color: var(--ink-soft); }
+.compact .no { top: .6rem; right: .6rem; padding: .45rem .3rem; font-size: .8rem; }
+.compact .piece h3 { margin-top: .7rem; font-size: 1.2rem; }
+.compact .piece small { font-size: .92rem; }
+
+/* ---------- Callout ---------- */
+/* A cartouche-colored box beside the text; sticky in the right margin on wide screens. */
+.with-aside { display: grid; grid-template-columns: minmax(0, 37rem); gap: 0 6rem; }
+@media (min-width: 64rem) { .with-aside { grid-template-columns: minmax(0, 37rem) 17rem; } }
+.callout {
+  align-self: start;
+  margin-top: 3rem;
+  padding: 1.6rem 1.6rem 1.4rem;
+  background: var(--cart);
+  box-shadow: var(--double-rule);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+@media (min-width: 64rem) { .with-aside .callout { position: sticky; top: 2.5rem; } }
+.callout .label { margin: 0 0 .6rem; font-weight: 700; }
+.callout p { margin: 0 0 1.1rem; text-wrap: pretty; }
+.callout .cta { display: block; width: fit-content; margin-top: .9rem; padding: .4rem 0; overflow-wrap: anywhere; text-decoration-color: var(--fire); text-decoration-thickness: var(--underline-bold); text-underline-offset: .26em; text-decoration-skip-ink: none; }
+
+/* ---------- Timeline ---------- */
+/* A vertical rule with a dot per stop; dots cycle air, earth, water, fire. */
+.timeline { list-style: none; margin: 3rem 0 3.5rem; padding: 0; }
+.timeline li { position: relative; display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0 1.5rem; padding: 0 0 2.1rem; }
+.timeline li::before { content: ""; position: absolute; left: 7.75rem; top: .45rem; bottom: -.45rem; width: var(--rule); background: var(--ink); opacity: .35; }
+.timeline li:last-child::before { display: none; }
+.timeline li::after { content: ""; position: absolute; left: calc(7.75rem - .4rem); top: .4rem; width: .8rem; height: .8rem; border-radius: 50%; background: var(--air); box-shadow: 0 0 0 var(--rule) var(--ink); }
+.timeline li:nth-child(4n+2)::after { background: var(--earth); }
+.timeline li:nth-child(4n+3)::after { background: var(--water); }
+.timeline li:nth-child(4n+4)::after { background: var(--fire); }
+.timeline li > div { padding-left: 1rem; }
+.timeline .when { font-size: 1rem; text-align: right; white-space: nowrap; padding-top: .15rem; }
+.timeline .where { display: block; margin-bottom: .3rem; font-weight: 700; font-size: 1.3rem; line-height: 1.3; }
+.timeline .line { display: block; font-size: 1.05rem; line-height: 1.65; color: var(--ink-body); text-wrap: pretty; }
+@media (max-width: 40rem) {
+  .timeline li { grid-template-columns: minmax(0, 1fr); padding-left: 1.9rem; }
+  .timeline li::before { left: .4rem; top: .6rem; }
+  .timeline li::after { left: 0; top: .35rem; }
+  .timeline li > div { padding-left: 0; }
+  .timeline .when { text-align: left; font-size: .9rem; color: var(--ink-soft); padding: 0 0 .1rem; }
+}
+
+/* ---------- Article and prose ---------- */
+.post { width: 100%; max-width: var(--measure); margin: 0 auto; padding-top: 2.75rem; }
+.back { display: inline-flex; align-items: center; min-height: 44px; font-size: .9rem; text-decoration-color: var(--water); text-decoration-thickness: var(--underline); text-underline-offset: .26em; }
+.post h1 { margin: .4rem 0 .6rem; font-weight: 700; font-size: var(--text-post); line-height: 1.1; }
+.meta { margin: 0 0 2.25rem; padding-bottom: 1.25rem; border-bottom: var(--rule) solid var(--ink); color: var(--ink-soft); font-size: 1.05rem; }
+
+.prose { line-height: var(--leading-prose); overflow-wrap: break-word; }
+.prose p { margin: 0 0 1.15rem; text-wrap: pretty; }
+.prose a { text-decoration-color: var(--water); text-decoration-thickness: var(--underline); text-underline-offset: var(--underline-offset); }
+.prose h2 { margin: 2.75rem 0 .6rem; font-weight: 700; font-size: 1.75rem; line-height: 1.25; }
+.prose h3 { margin: 2rem 0 .4rem; font-weight: 600; font-size: 1.25rem; line-height: 1.3; }
+.prose ul, .prose ol { margin: 0 0 1.2rem; padding-left: 1.3rem; }
+.prose li { margin: .25rem 0; }
+.prose li::marker { color: var(--fire); }
+.prose hr { border: 0; border-top: var(--rule) solid var(--ink); margin: 2.5rem 0; }
+.prose blockquote {
+  margin: 2.25rem 0;
+  padding: 1.1rem 1.4rem;
+  background: var(--cart);
+  box-shadow: var(--double-rule);
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+.prose blockquote p { margin: 0 0 .4rem; }
+.prose blockquote cite { display: block; font-style: normal; font-size: var(--text-sm); color: var(--ink-soft); }
+.prose figure { margin: 2rem 0; }
+.prose .plate img { display: block; width: 100%; height: auto; }
+/* A plate holding an SVG print has no intrinsic height; give it an aspect-ratio. */
+.prose figcaption { margin-top: .65rem; font-size: 1rem; color: var(--ink-soft); }
+.prose img { max-width: 100%; height: auto; }
+.prose table { border-collapse: collapse; margin: 0 0 1.5rem; font-size: 1.05rem; }
+.prose th, .prose td { border-bottom: 1px solid var(--hairline); padding: .4rem .8rem .4rem 0; text-align: left; }
+
+/* ---------- Code ---------- */
+.prose code { font-family: var(--mono); font-size: .82em; background: rgba(31, 63, 102, .1); padding: .1em .32em; border-radius: 2px; }
+.prose pre { margin: 1.5rem 0 1.75rem; padding: 1.1rem 1.25rem; background: var(--ink) !important; color: var(--paper); overflow-x: auto; font-family: var(--mono); font-size: .86rem; line-height: 1.6; }
+.prose pre code { background: none; padding: 0; font-size: 1em; color: inherit; }
+/* Syntax colors (Chroma/Pygments class names), tuned to the ink block. */
+.chroma .c, .chroma .c1, .chroma .ch, .chroma .cm, .chroma .cp, .chroma .cpf, .chroma .cs { color: #B8AC98; font-style: italic; }
+.chroma .k, .chroma .kc, .chroma .kd, .chroma .kn, .chroma .kp, .chroma .kr, .chroma .kt, .chroma .nb, .chroma .bp { color: #EDBE6A; }
+.chroma .s, .chroma .s1, .chroma .s2, .chroma .sa, .chroma .sb, .chroma .sc, .chroma .sd, .chroma .se, .chroma .sh, .chroma .si, .chroma .sx, .chroma .sr, .chroma .ss, .chroma .dl { color: #B9D3A8; }
+.chroma .m, .chroma .mb, .chroma .mf, .chroma .mh, .chroma .mi, .chroma .il, .chroma .mo, .chroma .nf, .chroma .fm { color: #A9C7E6; }
+.chroma .gd { color: #F0A493; }
+.chroma .gi { color: #B9D3A8; }
+.chroma .hl { display: block; background: rgba(246, 240, 226, .08); }
+
+/* ---------- Pager ---------- */
+.pager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1.5rem; border-top: var(--rule) solid var(--ink); padding-top: 1rem; }
+.pager a { display: inline-block; padding: .5rem 0; font-size: 1.12rem; text-decoration-color: var(--water); text-decoration-thickness: var(--underline); text-underline-offset: var(--underline-offset); }
+.pager .next { margin-left: auto; text-align: right; }
+.pager small { display: block; font-size: var(--text-sm); color: var(--ink-soft); }
+
+/* ---------- Notice (404, empty states) ---------- */
+/* A centered cartouche on a full scene print. */
+.plate.notice {
+  min-height: clamp(28rem, 52vw, 36rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+.notice .cart {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  max-width: 30rem;
+  padding: 1.6rem 1.6rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 0 0 var(--rule) var(--ink), inset 0 0 0 5px var(--cart), inset 0 0 0 6.5px var(--ink);
+}
+.notice h1 { margin: 0 0 .75rem; font-size: clamp(2rem, 6vw, 2.9rem); line-height: 1.1; }
+.notice p { margin: 0 0 1.25rem; }
+.notice .home { display: inline-flex; align-items: center; min-height: 44px; font-size: 1rem; text-decoration-color: var(--fire); text-decoration-thickness: var(--underline-bold); text-underline-offset: .3em; }
