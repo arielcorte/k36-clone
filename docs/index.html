@@ -145,6 +145,7 @@ roms.download_enabled=1</pre>
         <ul class="nav tabs" role="tablist">
           <li><button class="water" data-tab="add" role="tab" aria-selected="true">Agregar juegos</button></li>
           <li><button class="water" data-tab="remove" role="tab" aria-selected="false">Quitar juegos</button></li>
+          <li><button class="water" data-tab="art" role="tab" aria-selected="false">Carátulas y datos</button></li>
           <li><button class="water" data-tab="backup" role="tab" aria-selected="false">Respaldar partidas</button></li>
         </ul>
 
@@ -155,6 +156,7 @@ roms.download_enabled=1</pre>
             <span>Soltá los juegos acá o <u>elegilos de la computadora</u></span>
             <span class="note">Por ejemplo <code>.gba</code>, <code>.sfc</code>, <code>.nes</code>, <code>.gb</code>, <code>.zip</code>, <code>.chd</code></span>
           </label>
+          <label class="check"><input type="checkbox" id="add-scrape" checked> Buscar la carátula, el nombre y la descripción de cada juego (necesita internet)</label>
           <ul id="queue" class="rows"></ul>
           <div class="actions" id="queue-actions" hidden>
             <button id="copy-all" class="btn cta">Copiar a la tarjeta</button>
@@ -164,7 +166,7 @@ roms.download_enabled=1</pre>
         </div>
 
         <div class="panel" data-panel="remove" role="tabpanel" hidden>
-          <p>Elegí una consola para ver sus juegos, marcá los que quieras borrar y confirmá.</p>
+          <p>Elegí una consola para ver sus juegos, marcá los que quieras borrar y confirmá. Se borran también sus carátulas y su entrada en la lista de la consola.</p>
           <div class="actions">
             <select id="remove-system" aria-label="Consola"><option value="">Elegí una consola</option></select>
             <input id="remove-search" type="search" placeholder="Buscar por nombre" aria-label="Buscar por nombre" disabled>
@@ -181,6 +183,27 @@ roms.download_enabled=1</pre>
           </div>
         </div>
 
+        <div class="panel" data-panel="art" role="tabpanel" hidden>
+          <p>Las carátulas, los nombres y las descripciones que muestra la consola. Cuando agregás juegos, la página los busca sola. Acá podés completar los que falten, pasar las descripciones al español y corregir cualquier juego a mano.</p>
+          <div class="actions">
+            <select id="art-system" aria-label="Consola"><option value="">Elegí una consola</option></select>
+            <input id="art-search" type="search" placeholder="Buscar por nombre" aria-label="Buscar por nombre" disabled>
+          </div>
+          <p id="art-status" class="note" role="status"></p>
+          <div id="art-tools" hidden>
+            <label class="check"><input type="checkbox" id="art-wiki" checked> Buscar también la descripción en Wikipedia</label>
+            <div class="actions">
+              <button id="art-fill" class="btn cta">Buscar lo que falta</button>
+              <button id="art-translate" class="btn">Traducir descripciones al español</button>
+              <button id="art-stop" class="btn" hidden>Detener</button>
+            </div>
+            <div class="bar-k36" id="art-progress" hidden><i></i></div>
+          </div>
+          <ul id="art-list" class="rows art"></ul>
+          <p class="note">Para traducir todas las consolas de una vez (tarda: usa el traductor de Chrome, sin mandar nada a internet):</p>
+          <p><button id="art-translate-all" class="btn">Traducir las descripciones de todas las consolas</button></p>
+        </div>
+
         <div class="panel" data-panel="backup" role="tabpanel" hidden>
           <p>Busca en la tarjeta las partidas y los estados guardados, y los junta en un archivo .zip que se descarga en la carpeta Descargas.</p>
           <ul class="plain">
@@ -192,6 +215,45 @@ roms.download_enabled=1</pre>
         </div>
       </div>
     </section>
+
+    <dialog id="art-dialog" class="k36-dialog" aria-labelledby="art-d-title">
+      <form method="dialog" id="art-form">
+        <h3 id="art-d-title">Editar juego</h3>
+        <p class="note" id="art-d-file"></p>
+        <div id="art-d-find-box">
+          <label for="art-d-q">Buscar el juego en la base de datos</label>
+          <div class="actions">
+            <input id="art-d-q" type="search">
+            <button type="button" id="art-d-find" class="btn">Buscar</button>
+          </div>
+          <ul id="art-d-results" class="rows results"></ul>
+        </div>
+        <div class="slots">
+          <figure data-kind="thumbnail"><span class="frame"><img alt="Caja"></span><figcaption>Caja</figcaption>
+            <button type="button" class="x" data-act="pick">Cambiar</button><button type="button" class="x" data-act="clear">Quitar</button></figure>
+          <figure data-kind="image"><span class="frame"><img alt="Captura"></span><figcaption>Captura</figcaption>
+            <button type="button" class="x" data-act="pick">Cambiar</button><button type="button" class="x" data-act="clear">Quitar</button></figure>
+          <figure data-kind="marquee"><span class="frame"><img alt="Logo"></span><figcaption>Logo</figcaption>
+            <button type="button" class="x" data-act="pick">Cambiar</button><button type="button" class="x" data-act="clear">Quitar</button></figure>
+        </div>
+        <input type="file" id="art-d-image" accept="image/png,image/jpeg,image/webp" hidden>
+        <label class="field">Nombre <input id="art-d-name" type="text"></label>
+        <label class="field">Descripción <textarea id="art-d-desc" rows="6"></textarea></label>
+        <div class="fields">
+          <label class="field">Año <input id="art-d-year" type="text" inputmode="numeric" maxlength="4"></label>
+          <label class="field">Género <input id="art-d-genre" type="text"></label>
+          <label class="field">Desarrollador <input id="art-d-dev" type="text"></label>
+          <label class="field">Editor <input id="art-d-pub" type="text"></label>
+          <label class="field">Jugadores <input id="art-d-players" type="text" placeholder="1-2"></label>
+        </div>
+        <p class="note" id="art-d-msg" role="status"></p>
+        <div class="actions">
+          <button value="save" id="art-d-save" class="btn cta">Guardar</button>
+          <button value="cancel" class="btn" formnovalidate>Cancelar</button>
+          <button type="button" id="art-d-translate" class="btn">Traducir la descripción</button>
+        </div>
+      </form>
+    </dialog>
 
     <section class="sec" id="paso-3" aria-labelledby="h-paso-3" hidden>
       <div class="sechead"><h2 id="h-paso-3">3. Al terminar</h2></div>
@@ -216,6 +278,11 @@ roms.download_enabled=1</pre>
         <details><summary>Juegos de PlayStation con archivos .cue y .bin</summary>
           <p>Agregá todos los archivos del juego juntos. El <code>.cue</code> es el índice y los <code>.bin</code> son el disco: la página reconoce los discos de PlayStation y manda los <code>.bin</code> a la misma carpeta que su <code>.cue</code>.</p>
           <p>No los cargues en <code>.7z</code> ni <code>.zip</code>: la consola no lee discos comprimidos. Si querés ahorrar espacio, convertí el juego a <code>.chd</code> con <code>chdman</code> (viene con MAME): <code>chdman createcd -i "Juego.cue" -o "Juego.chd"</code>. Queda un solo archivo, ocupa más o menos lo mismo que el <code>.7z</code> y anda igual.</p>
+        </details>
+        <details><summary>De dónde salen las carátulas y las descripciones</summary>
+          <p>Batocera las busca en ScreenScraper, pero esa base no deja que una página web la use sin credenciales de desarrollador. Por eso la página usa fuentes abiertas: la base de datos y las imágenes de <a href="https://github.com/libretro/libretro-database">libretro</a> (los creadores de RetroArch) y las descripciones de Wikipedia, en español cuando existen.</p>
+          <p>Las guarda igual que Batocera: en la carpeta <code>images</code> de cada consola, como <code>juego-image.png</code> (captura), <code>juego-thumb.jpg</code> (caja) y <code>juego-marquee.png</code> (logo), y anota todo en el <code>gamelist.xml</code>. Antes de cambiar un <code>gamelist.xml</code> por primera vez, guarda una copia al lado, como <code>gamelist.xml.antes-k36</code>.</p>
+          <p>Las imágenes se achican a la medida de la pantalla de la consola, para no gastar espacio. Las traducciones usan el traductor que trae Chrome, que funciona en la computadora sin mandar el texto a nadie.</p>
         </details>
         <details><summary>Cómo restaurar una copia de partidas</summary>
           <p>Descomprimí el .zip y copiá su contenido a la raíz de la unidad GAMES, aceptando reemplazar archivos. Las carpetas del .zip (<code>downloads</code>, <code>roms</code>, <code>saves</code>) son las mismas que las de la tarjeta.</p>

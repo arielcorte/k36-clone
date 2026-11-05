@@ -110,3 +110,37 @@ details p { margin: 0 0 1rem; }
   max-width: min(36rem, 92vw); padding: .85rem 1.2rem; background: var(--cart); box-shadow: var(--double-rule);
   font-size: 1.02rem;
 }
+
+/* Carátulas y datos */
+.art > li { grid-template-columns: 56px minmax(0, 1fr) auto; }
+.cover-box { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
+.cover { max-width: 56px; max-height: 56px; object-fit: contain; }
+.cover.none { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border: 1px dashed var(--hairline); font-size: .72rem; color: var(--ink-soft); text-align: center; line-height: 1.1; }
+.art .btn, .results .btn { min-height: 38px; padding: .2rem .8rem; font-size: .95rem; }
+#art-progress { margin: .5rem 0 1rem; }
+
+/* Ventana para editar un juego: una lámina con borde de tinta. */
+.k36-dialog { width: min(46rem, 94vw); max-height: 92vh; padding: 1.4rem 1.6rem; border: var(--rule) solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink); font-family: var(--serif, inherit); }
+.k36-dialog::backdrop { background: rgba(31, 41, 51, .45); }
+.k36-dialog h3 { margin: 0 0 .2rem; font-size: 1.4rem; }
+.k36-dialog label { font-weight: 600; }
+.k36-dialog .field { display: flex; flex-direction: column; gap: .3rem; margin: 0 0 .9rem; }
+.k36-dialog input[type=text], .k36-dialog textarea {
+  min-height: 40px; padding: .35rem .6rem; border: var(--rule) solid var(--ink); border-radius: 0;
+  background: var(--paper-light); color: var(--ink); font: inherit; font-weight: 400; font-size: 1rem;
+}
+.k36-dialog textarea { min-height: 8rem; resize: vertical; line-height: 1.45; }
+.k36-dialog .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0 1rem; }
+.k36-dialog .actions input[type=search] { flex: 1 1 14rem; }
+.results { max-height: 15rem; overflow-y: auto; margin-bottom: 1rem; }
+.results > li { grid-template-columns: 48px minmax(0, 1fr) auto; padding: .4rem 0; }
+.results img { width: 48px; height: 48px; object-fit: contain; }
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0 1.2rem; }
+.slots figure { margin: 0; text-align: center; }
+.slots .frame { display: flex; align-items: center; justify-content: center; height: 120px; border: 1px solid var(--hairline); background: var(--paper-light); }
+.slots img { max-width: 100%; max-height: 118px; object-fit: contain; }
+.slots figure.empty img { display: none; }
+.slots figure.empty .frame::after { content: 'sin imagen'; font-size: var(--text-sm); color: var(--ink-soft); }
+.slots figcaption { margin: .3rem 0 .1rem; font-weight: 600; }
+.slots .x { min-height: 32px; padding: 0 .35rem; border: 0; background: none; color: var(--ink-soft); font: inherit; font-size: var(--text-sm); cursor: pointer; text-decoration: underline; text-decoration-color: var(--hairline); }
+.slots .x:hover { color: var(--ink); }

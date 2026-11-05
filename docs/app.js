@@ -1,4 +1,6 @@
 import { SYSTEMS } from './systems.js';
+import * as S from './scraper.js';
+import * as G from './gamelist.js';
 
 // ---------- Constantes ----------
 const PREFERRED = ['gba', 'gbc', 'gb', 'snes', 'sfc', 'nes', 'megadrive', 'genesis', 'mastersystem', 'gamegear',
@@ -312,7 +314,7 @@ function renderQueue() {
       pending: item.owner
         ? (item.system ? `Va con ${item.owner.file.name} a ${sysName(item.system)}` : `Va con ${item.owner.file.name}: elegí la consola ahí`)
         : (item.system ? `Va a ${sysName(item.system)}` : 'Elegí la consola'),
-      copying: 'Copiando…', done: `Copiado a roms/${item.system}/`, skipped: 'Salteado: ya estaba en la tarjeta', error: item.msg,
+      copying: 'Copiando…', done: `Copiado a roms/${item.system}/${item.art ? ' · ' + item.art : ''}`, skipped: 'Salteado: ya estaba en la tarjeta', error: item.msg,
     }[item.state];
     const warn = itemWarning(item);
     el.innerHTML = `<div><div class="name">${esc(item.file.name)}</div>
@@ -363,6 +365,8 @@ async function copyOne(item) {
 async function onCopyAll() {
   const ready = queue.filter((q) => q.state === 'pending' && q.system);
   if (!ready.length) return;
+  const wantArt = $('#add-scrape').checked;
+  if (wantArt) S.prepareTranslator('en');
   const conflicts = [];
   for (const q of ready) {
     const dir = await getDir(card.roms, q.system);
@@ -401,6 +405,7 @@ async function onCopyAll() {
       part.state = 'error'; part.msg = 'Se borró de la tarjeta porque el disco no entró completo.';
     }
   }
+  if (wantArt) await scrapeCopied(ready);
   guardUnload(false);
   renderQueue();
   ok = ready.filter((q) => q.state === 'done').length;
@@ -413,16 +418,27 @@ async function onCopyAll() {
 let games = []; const selected = new Set(); let scanToken = 0;
 
 function fillRemoveSystems() {
-  const sel = $('#remove-system');
-  sel.innerHTML = '<option value="">Elegí una consola</option>' + card.systems
+  const opts = '<option value="">Elegí una consola</option>' + card.systems
     .slice().sort((a, b) => a[1].localeCompare(b[1], 'es'))
     .map((s) => `<option value="${s[0]}">${esc(s[1])} (${s[0]})</option>`).join('');
+  $('#remove-system').innerHTML = opts;
+  $('#art-system').innerHTML = opts;
 }
 
 async function scanSystem(folder) {
   const token = ++scanToken;
   games = []; selected.clear(); renderGames();
   const info = $('#remove-status');
+  const found = await collectGames(folder, info, () => token === scanToken);
+  if (!found) return;
+  games = found;
+  info.textContent = games.length ? `${games.length} juegos en ${sysName(folder)}.` : `No hay juegos en ${sysName(folder)}.`;
+  $('#remove-search').disabled = !games.length;
+  renderGames();
+}
+
+// Juegos de una consola, en roms/ y downloads/, con los .bin agrupados bajo su .cue. Devuelve null si se canceló.
+async function collectGames(folder, info, current) {
   const sys = SYSTEMS.find((s) => s[0] === folder);
   const exts = new Set(sys[2]);
   const found = [];
@@ -431,7 +447,7 @@ async function scanSystem(folder) {
   for (const [where, dir] of sources) {
     if (!dir) continue;
     for await (const f of walk(dir)) {
-      if (token !== scanToken) return;
+      if (!current()) return null;
       if (SKIP_FILES.has(f.name.toLowerCase()) || !exts.has(extOf(f.name)) || SAVE_RE.test(f.name)) continue;
       found.push({ ...f, where, key: `${where}/${[...f.path, f.name].join('/')}`, parts: [] });
       if (++n % 200 === 0) info.textContent = `Buscando juegos… van ${n}.`;
@@ -451,11 +467,8 @@ async function scanSystem(folder) {
       }
     } catch {}
   }
-  if (token !== scanToken) return;
-  games = found.filter((g) => !hidden.has(g.key)).sort((a, b) => a.name.localeCompare(b.name, 'es'));
-  info.textContent = games.length ? `${games.length} juegos en ${sysName(folder)}.` : `No hay juegos en ${sysName(folder)}.`;
-  $('#remove-search').disabled = !games.length;
-  renderGames();
+  if (!current()) return null;
+  return found.filter((g) => !hidden.has(g.key)).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }
 
 function renderGames() {
@@ -514,23 +527,416 @@ async function onRemove() {
       for (const s of saves) { const f = await s.handle.getFile(); entries.push({ path: s.rel, data: new Uint8Array(await f.arrayBuffer()), mtime: f.lastModified }); }
       download(makeZip(entries), `partidas-${folder}-${today()}.zip`);
     }
-    let removed = 0; const failed = [];
+    let removed = 0; const failed = []; const gone = [];
     for (const g of chosen) {
       try {
         for (const p of g.parts) await p.dir.removeEntry(p.name);
         await g.dir.removeEntry(g.name);
-        removed++;
+        removed++; gone.push(g);
       } catch (e) { failed.push(`${g.name}: ${explainError(e)}`); }
     }
     if (wantSaves) for (const s of saves) { try { await s.dir.removeEntry(s.name); } catch {} }
+    let artNote = '';
+    if (gone.length) {
+      info.textContent = 'Borrando sus carátulas…';
+      try {
+        const n = await removeArt(folder, gone, games.filter((g) => !gone.includes(g)));
+        if (n) artNote = ` También se borraron ${n} imagen(es) y video(s).`;
+      } catch (e) { artNote = ` No pude borrar sus carátulas: ${e.message || explainError(e)}`; }
+    }
     const backupNote = wantBackup && saves.length ? ` Se descargó una copia de ${saves.length} partida(s) en tu carpeta Descargas.` : '';
     if (failed.length) toast(`Se borraron ${removed}, fallaron ${failed.length}: ${failed[0]}`, 'bad');
-    else toast(`Se borraron ${removed} juego(s).${backupNote}`, 'ok');
+    else toast(`Se borraron ${removed} juego(s).${artNote}${backupNote}`, 'ok');
   } catch (e) {
     toast(explainError(e), 'bad');
   }
   guardUnload(false);
   await scanSystem(folder);
+}
+
+
+// ---------- Carátulas y datos (gamelist.xml) ----------
+async function sysDirsFor(folder, create = false) {
+  return { roms: await getDir(card.roms, folder, create), downloads: await getDir(card.downloads, folder) };
+}
+
+// Guarda una imagen como lo hace Batocera: images/<juego>-<sufijo>.<ext>. Devuelve la ruta para el gamelist.
+async function writeMedia(sysDirs, stem, kind, img) {
+  const dir = await getDir(sysDirs.roms, 'images', true);
+  const suffix = G.SUFFIX[kind];
+  const dlImages = await getDir(sysDirs.downloads, 'images');
+  for (const ext of ['png', 'jpg', 'jpeg']) {
+    const old = `${stem}-${suffix}.${ext}`;
+    if (ext !== img.ext) { try { await dir.removeEntry(old); } catch {} }
+    // Una imagen con el mismo nombre en downloads/ taparía la nueva.
+    if (dlImages) { try { await dlImages.removeEntry(old); } catch {} }
+  }
+  const name = `${stem}-${suffix}.${img.ext}`;
+  const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+  await w.write(img.blob); await w.close();
+  return `./images/${name}`;
+}
+
+async function deleteMedia(sysDirs, folder, mediaPath) {
+  let n = 0;
+  for (let i = 0; i < 2; i++) {
+    const f = await G.resolveMedia(sysDirs, mediaPath, folder);
+    if (!f) break;
+    try { await f.dir.removeEntry(f.name); n++; } catch { break; }
+  }
+  return n;
+}
+
+// Al quitar juegos: su entrada del gamelist, las imágenes que figuran ahí y las que siguen la convención de nombres.
+async function removeArt(folder, gone, remaining) {
+  const sysDirs = await sysDirsFor(folder);
+  let n = 0;
+  const gl = await G.openGamelist(folder, sysDirs);
+  for (const g of gone) for (const m of G.removeEntry(gl, [...g.path, g.name].join('/'))) n += await deleteMedia(sysDirs, folder, m);
+  await G.saveGamelist(gl);
+  const keep = new Set(remaining.map((g) => baseOf(g.name).toLowerCase()));
+  const stems = [...new Set(gone.map((g) => baseOf(g.name).toLowerCase()))].filter((st) => !keep.has(st));
+  if (!stems.length) return n;
+  const suffixes = Object.values(G.SUFFIX).join('|');
+  for (const base of [sysDirs.roms, sysDirs.downloads]) {
+    for (const dname of G.MEDIA_DIRS) {
+      const d = await getDir(base, dname);
+      if (!d) continue;
+      const names = [];
+      for await (const [name, h] of d.entries()) if (h.kind === 'file') names.push(name);
+      for (const name of names) {
+        const low = name.toLowerCase();
+        const st = stems.find((x) => low.startsWith(x) && new RegExp(`^(-(${suffixes}))?\\.[a-z0-9]+$`).test(low.slice(x.length)));
+        if (st) { try { await d.removeEntry(name); n++; } catch {} }
+      }
+    }
+  }
+  return n;
+}
+
+// Busca y escribe carátulas y datos de un juego. Con keep, no pisa lo que ya tiene.
+async function scrapeGame(folder, sysDirs, gl, relPath, file, { wiki = true, keep = false, onStatus } = {}) {
+  const fileName = relPath.split('/').pop();
+  const hit = await S.identify(folder, fileName, file, onStatus);
+  if (!hit) return null;
+  const old = (keep && G.getMeta(gl, relPath)) || {};
+  const meta = S.metaFrom(hit.rec);
+  const stem = baseOf(fileName);
+  for (const kind of ['image', 'thumbnail', 'marquee']) {
+    if (old[kind]) continue;
+    const img = await S.fetchImage(S.thumbUrls(folder, hit.rec, kind), kind);
+    if (img) meta[kind] = await writeMedia(sysDirs, stem, kind, img);
+  }
+  if (wiki && !old.desc) {
+    const d = await S.wikiDescription(meta.name, sysName(folder));
+    if (d) meta.desc = d.text;
+  }
+  for (const k of Object.keys(meta)) if (old[k]) delete meta[k];
+  G.setMeta(gl, relPath, meta);
+  return { name: meta.name || old.name || S.cleanName(hit.rec), images: ['image', 'thumbnail', 'marquee'].filter((k) => meta[k]).length };
+}
+
+// Después de copiar: carátula y datos de cada juego nuevo, consola por consola.
+async function scrapeCopied(ready) {
+  const items = ready.filter((q) => q.state === 'done' && !q.owner && S.canScrape(q.system));
+  const bySys = new Map();
+  for (const q of items) { if (!bySys.has(q.system)) bySys.set(q.system, []); bySys.get(q.system).push(q); }
+  for (const [folder, list] of bySys) {
+    let gl, sysDirs;
+    try {
+      sysDirs = await sysDirsFor(folder, true);
+      gl = await G.openGamelist(folder, sysDirs);
+    } catch (e) {
+      list.forEach((q) => (q.art = `No se buscó la carátula: ${e.message}`));
+      renderQueue();
+      continue;
+    }
+    for (const q of list) {
+      q.art = 'buscando la carátula…'; renderQueue();
+      try {
+        const disc = q.ext === 'cue' ? queue.find((p) => p.owner === q && sameName(p.file.name, q.refs[0] || '')) : null;
+        const r = await scrapeGame(folder, sysDirs, gl, q.file.name, (disc || q).file, { onStatus: (m) => { q.art = m; renderQueue(); } });
+        q.art = r ? `con carátula y datos de «${r.name}»` : 'no encontré su carátula (la podés poner en Carátulas y datos)';
+      } catch (e) {
+        q.art = `no se pudo buscar la carátula: ${e.message || e}`;
+      }
+      renderQueue();
+    }
+    try { await G.saveGamelist(gl); } catch (e) { list.forEach((q) => (q.art = `no se pudo guardar el gamelist.xml: ${explainError(e)}`)); }
+    renderQueue();
+  }
+}
+
+// ---------- Pestaña Carátulas y datos ----------
+const art = { folder: '', games: [], gl: null, sysDirs: null, token: 0, stop: false, urls: [] };
+const relOf = (g) => [...g.path, g.name].join('/');
+const LANG_NAME = { pt: 'portugués', en: 'inglés', fr: 'francés', it: 'italiano', de: 'alemán' };
+
+async function loadArt(folder) {
+  const token = ++art.token;
+  art.folder = folder; art.games = []; art.gl = null;
+  renderArt();
+  const info = $('#art-status');
+  if (!folder) { info.textContent = ''; return; }
+  const found = await collectGames(folder, info, () => token === art.token);
+  if (!found) return;
+  try {
+    art.sysDirs = await sysDirsFor(folder);
+    art.gl = await G.openGamelist(folder, art.sysDirs);
+  } catch (e) {
+    info.textContent = e.message || explainError(e);
+    return;
+  }
+  art.games = found;
+  updateArtStatus();
+  $('#art-search').disabled = !found.length;
+  renderArt();
+}
+
+function artInfo(g) {
+  const m = art.gl && G.getMeta(art.gl, relOf(g));
+  const lang = m?.desc ? S.guessLang(m.desc) : null;
+  return { m, cover: m?.thumbnail || m?.image || '', lang };
+}
+
+function updateArtStatus() {
+  const info = $('#art-status');
+  if (!art.games.length) { info.textContent = art.folder ? `No hay juegos en ${sysName(art.folder)}.` : ''; return; }
+  let noArt = 0, foreign = 0, noDesc = 0;
+  for (const g of art.games) { const i = artInfo(g); if (!i.cover) noArt++; if (!i.m?.desc) noDesc++; if (i.lang && i.lang !== 'es') foreign++; }
+  info.textContent = `${art.games.length} juegos en ${sysName(art.folder)}. ${noArt ? `${noArt} sin carátula.` : 'Todos tienen carátula.'}${noDesc ? ` ${noDesc} sin descripción.` : ''}${foreign ? ` ${foreign} con la descripción en otro idioma.` : ''}`
+    + (S.canScrape(art.folder) ? '' : ' Para esta consola no hay búsqueda automática: se pueden editar a mano.');
+  $('#art-fill').disabled = busy || !artTodo().length || !S.canScrape(art.folder);
+  $('#art-translate').disabled = busy || !foreign;
+}
+
+const coverObserver = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    const img = e.target; coverObserver.unobserve(img);
+    G.resolveMedia(art.sysDirs, img.dataset.media, art.folder).then(async (f) => {
+      if (!f) return img.replaceWith(Object.assign(document.createElement('span'), { className: 'cover none', textContent: 'falta' }));
+      const url = URL.createObjectURL(await f.handle.getFile());
+      art.urls.push(url); img.src = url;
+    }).catch(() => {});
+  }
+}, { rootMargin: '200px' });
+
+function renderArt() {
+  art.urls.forEach((u) => URL.revokeObjectURL(u)); art.urls = [];
+  const q = norm($('#art-search').value.trim());
+  const list = $('#art-list');
+  const rows = art.games.map((g) => ({ g, ...artInfo(g) }))
+    .filter(({ g, m }) => !q || norm(g.name).includes(q) || norm(m?.name || '').includes(q));
+  const LIMIT = 300;
+  list.innerHTML = rows.slice(0, LIMIT).map(({ g, m, cover, lang }, i) => {
+    const notes = [!cover ? 'sin carátula' : '', !m?.desc ? 'sin descripción' : lang && lang !== 'es' ? `descripción en ${LANG_NAME[lang] || lang}` : ''].filter(Boolean);
+    return `<li><span class="cover-box">${cover ? `<img class="cover" alt="" data-media="${esc(cover)}">` : '<span class="cover none">sin imagen</span>'}</span>
+      <span><span class="name">${esc(m?.name || baseOf(g.name))}</span><br><span class="sub ${notes.length ? 'bad' : ''}">${esc([g.name, ...notes].join(' · '))}</span></span>
+      <button class="btn" data-edit="${art.games.indexOf(g)}">Editar</button></li>`;
+  }).join('') + (rows.length > LIMIT ? `<li class="sub">Se muestran ${LIMIT} de ${rows.length}. Usá el buscador para encontrar el resto.</li>` : '');
+  list.querySelectorAll('img[data-media]').forEach((img) => coverObserver.observe(img));
+  $('#art-tools').hidden = !art.games.length;
+}
+
+function artProgress(done, total, text) {
+  const bar = $('#art-progress');
+  bar.hidden = total === 0;
+  bar.querySelector('i').style.width = total ? `${Math.round((done / total) * 100)}%` : '0';
+  if (text) $('#art-status').textContent = text;
+}
+
+function artBusy(on) {
+  guardUnload(on);
+  $('#art-stop').hidden = !on; $('#art-stop').disabled = false; art.stop = false;
+  for (const id of ['#art-fill', '#art-translate', '#art-translate-all', '#art-system']) $(id).disabled = on;
+  if (!on) updateArtStatus();
+}
+
+// Juegos a los que les falta la carátula, o la descripción si se pidió buscarla.
+const artTodo = () => art.games.filter((g) => { const i = artInfo(g); return !i.cover || ($('#art-wiki').checked && !i.m?.desc); });
+
+async function onArtFill() {
+  S.prepareTranslator('en');
+  const folder = art.folder, gl = art.gl, sysDirs = await sysDirsFor(folder, true);
+  const todo = artTodo();
+  if (!todo.length) return;
+  artBusy(true);
+  let done = 0, found = 0, next = 0;
+  const wiki = $('#art-wiki').checked;
+  const worker = async () => {
+    while (next < todo.length && !art.stop) {
+      const g = todo[next++];
+      try {
+        const file = await (g.parts[0] || g).handle.getFile();
+        if (await scrapeGame(folder, sysDirs, gl, relOf(g), file, { wiki, keep: true, onStatus: (m) => artProgress(done, todo.length, m) })) found++;
+      } catch {}
+      done++;
+      artProgress(done, todo.length, `Buscando: ${done} de ${todo.length}. Encontrados: ${found}.`);
+      if (done % 20 === 0) await G.saveGamelist(gl).catch(() => {});
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  try { await G.saveGamelist(gl); } catch (e) { toast(`No se pudo guardar el gamelist.xml: ${explainError(e)}`, 'bad'); }
+  artBusy(false); artProgress(0, 0);
+  toast(`${art.stop ? 'Búsqueda detenida. ' : ''}Encontré datos de ${found} de ${done} juego(s).${found < done ? ' Los que faltan los podés completar con Editar.' : ''}`, found ? 'ok' : '');
+  renderArt();
+}
+
+async function prepareTranslation() {
+  if (!S.canTranslate()) {
+    toast('Este navegador no trae el traductor incorporado. Abrí la página en Google Chrome 138 o más nuevo, en una computadora.', 'bad');
+    return false;
+  }
+  const ok = await Promise.all([S.prepareTranslator('pt'), S.prepareTranslator('en')]);
+  if (!ok.some(Boolean)) { toast('Chrome no pudo preparar el traductor. Probá de nuevo en un rato (la primera vez baja los idiomas).', 'bad'); return false; }
+  return true;
+}
+
+// Traduce al español las descripciones de un gamelist. Devuelve cuántas cambió.
+async function translateGamelist(gl, onEach) {
+  let n = 0, i = 0;
+  const keys = [...gl.games.keys()];
+  for (const k of keys) {
+    if (art.stop) break;
+    i++;
+    const desc = G.getMeta(gl, k)?.desc;
+    const lang = desc && (await S.detectLang(desc));
+    if (lang && lang !== 'es' && LANG_NAME[lang]) {
+      const t = await S.translate(desc, lang);
+      if (t && t !== desc) { G.setMeta(gl, k, { desc: t }); n++; }
+      if (n && n % 25 === 0) await G.saveGamelist(gl).catch(() => {});
+    }
+    onEach?.(i, keys.length, n);
+  }
+  await G.saveGamelist(gl);
+  return n;
+}
+
+async function onArtTranslate() {
+  if (!(await prepareTranslation())) return;
+  artBusy(true);
+  try {
+    const n = await translateGamelist(art.gl, (i, total, n) => artProgress(i, total, `Traduciendo: ${i} de ${total}. Traducidas: ${n}.`));
+    toast(`Listo: se tradujeron ${n} descripción(es) de ${sysName(art.folder)}.`, 'ok');
+  } catch (e) { toast(`No se pudo terminar: ${e.message || explainError(e)}`, 'bad'); }
+  artBusy(false); artProgress(0, 0); renderArt();
+}
+
+async function onArtTranslateAll() {
+  if (!(await prepareTranslation())) return;
+  artBusy(true);
+  let total = 0, sysDone = 0;
+  try {
+    for (const [folder] of card.systems) {
+      if (art.stop) break;
+      sysDone++;
+      const sysDirs = await sysDirsFor(folder);
+      let gl;
+      try { gl = await G.openGamelist(folder, sysDirs); } catch { continue; }
+      if (gl.original == null) continue;
+      total += await translateGamelist(gl, (i, n, t) => artProgress(sysDone, card.systems.length,
+        `${sysName(folder)} (${sysDone} de ${card.systems.length} consolas): ${i} de ${n} juegos. Traducidas en total: ${total + t}.`));
+    }
+    toast(`Listo: se tradujeron ${total} descripción(es) en todas las consolas.`, 'ok');
+  } catch (e) { toast(`No se pudo terminar: ${e.message || explainError(e)}`, 'bad'); }
+  artBusy(false); artProgress(0, 0);
+  if (art.folder) await loadArt(art.folder);
+}
+
+// ---------- Editar un juego ----------
+const KIND_LABEL = { thumbnail: 'Caja', image: 'Captura', marquee: 'Logo' };
+let edit = null;
+
+async function previewMedia(kind, src) {
+  const fig = $(`#art-dialog figure[data-kind=${kind}]`);
+  const img = fig.querySelector('img');
+  if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+  img.removeAttribute('src'); delete img.dataset.url;
+  fig.classList.toggle('empty', !src);
+  if (!src) return;
+  const blob = src instanceof Blob ? src : await (await G.resolveMedia(art.sysDirs, src, art.folder))?.handle.getFile();
+  if (!blob) { fig.classList.add('empty'); return; }
+  img.dataset.url = img.src = URL.createObjectURL(blob);
+}
+
+function openEdit(g) {
+  const m = G.getMeta(art.gl, relOf(g)) || {};
+  edit = { g, rel: relOf(g), pending: {} };
+  $('#art-d-file').textContent = `${sysName(art.folder)} · ${g.name}`;
+  $('#art-d-name').value = m.name || baseOf(g.name);
+  $('#art-d-desc').value = m.desc || '';
+  $('#art-d-year').value = (m.releasedate || '').slice(0, 4).replace(/\D/g, '');
+  $('#art-d-genre').value = m.genre || '';
+  $('#art-d-dev').value = m.developer || '';
+  $('#art-d-pub').value = m.publisher || '';
+  $('#art-d-players').value = m.players || '';
+  $('#art-d-q').value = m.name || baseOf(g.name).replace(/\s*[([][^)\]]*[)\]]/g, '');
+  $('#art-d-results').innerHTML = '';
+  $('#art-d-find-box').hidden = !S.canScrape(art.folder);
+  $('#art-d-msg').textContent = '';
+  for (const kind of Object.keys(KIND_LABEL)) previewMedia(kind, m[kind] || '');
+  $('#art-dialog').showModal();
+}
+
+async function onEditFind() {
+  const q = $('#art-d-q').value.trim();
+  const box = $('#art-d-results');
+  if (!q) return;
+  box.innerHTML = '<li class="sub">Buscando…</li>';
+  try {
+    const res = await S.searchTitles(art.folder, q, (m) => (box.innerHTML = `<li class="sub">${esc(m)}</li>`));
+    edit.results = res.map((r) => r.rec);
+    box.innerHTML = res.length ? res.map((r, i) => `<li><img alt="" loading="lazy" src="${esc(S.thumbUrls(art.folder, r.rec, 'thumbnail')[0])}" onerror="this.style.visibility='hidden'">
+      <span>${esc(r.rec.name)}${r.rec.releaseyear ? ` <span class="sub">${r.rec.releaseyear}</span>` : ''}</span>
+      <button type="button" class="btn" data-use="${i}">Usar este</button></li>`).join('')
+      : '<li class="sub">No encontré nada con ese nombre. Probá con menos palabras o con el nombre en inglés.</li>';
+  } catch (e) { box.innerHTML = `<li class="sub">${esc(e.message || String(e))}</li>`; }
+}
+
+async function onEditUse(rec) {
+  const msg = $('#art-d-msg');
+  msg.textContent = 'Bajando las imágenes y los datos…';
+  const m = S.metaFrom(rec);
+  $('#art-d-name').value = m.name;
+  $('#art-d-year').value = (m.releasedate || '').slice(0, 4);
+  $('#art-d-genre').value = m.genre || '';
+  $('#art-d-dev').value = m.developer || '';
+  $('#art-d-pub').value = m.publisher || '';
+  $('#art-d-players').value = m.players || '';
+  edit.region = m.region;
+  let got = 0;
+  await Promise.all(Object.keys(KIND_LABEL).map(async (kind) => {
+    const img = await S.fetchImage(S.thumbUrls(art.folder, rec, kind), kind);
+    if (img) { edit.pending[kind] = img; got++; previewMedia(kind, img.blob); }
+  }));
+  const cur = $('#art-d-desc').value.trim();
+  if ($('#art-wiki').checked && (!cur || S.guessLang(cur) !== 'es')) {
+    msg.textContent = 'Buscando la descripción en Wikipedia…';
+    const d = await S.wikiDescription(m.name, sysName(art.folder));
+    if (d) $('#art-d-desc').value = d.text;
+  }
+  msg.textContent = `Listo: ${got} imagen(es). Revisá los datos y tocá Guardar.`;
+}
+
+async function onEditSave() {
+  const sysDirs = await sysDirsFor(art.folder, true);
+  const stem = baseOf(edit.g.name);
+  const old = G.getMeta(art.gl, edit.rel) || {};
+  const year = $('#art-d-year').value.trim();
+  const meta = {
+    name: $('#art-d-name').value.trim(), desc: $('#art-d-desc').value.trim(),
+    genre: $('#art-d-genre').value.trim(), developer: $('#art-d-dev').value.trim(),
+    publisher: $('#art-d-pub').value.trim(), players: $('#art-d-players').value.trim(),
+    releasedate: !year ? '' : (old.releasedate || '').startsWith(year) ? old.releasedate : `${year}0101T000000`,
+  };
+  if (edit.region && !old.region) meta.region = edit.region;
+  for (const [kind, v] of Object.entries(edit.pending)) {
+    if (v === 'clear') { if (old[kind]) await deleteMedia(sysDirs, art.folder, old[kind]); meta[kind] = ''; }
+    else meta[kind] = await writeMedia(sysDirs, stem, kind, v);
+  }
+  G.setMeta(art.gl, edit.rel, meta);
+  await G.saveGamelist(art.gl);
 }
 
 // ---------- Respaldar partidas ----------
@@ -636,5 +1042,48 @@ $('#game-list').addEventListener('change', (e) => {
 });
 $('#remove-go').addEventListener('click', onRemove);
 $('#backup-go').addEventListener('click', onBackup);
+$('#art-system').addEventListener('change', (e) => loadArt(e.target.value));
+$('#art-search').addEventListener('input', renderArt);
+$('#art-wiki').addEventListener('change', updateArtStatus);
+$('#art-fill').addEventListener('click', onArtFill);
+$('#art-translate').addEventListener('click', onArtTranslate);
+$('#art-translate-all').addEventListener('click', onArtTranslateAll);
+$('#art-stop').addEventListener('click', () => { art.stop = true; $('#art-stop').disabled = true; });
+$('#art-list').addEventListener('click', (e) => { const i = e.target.dataset.edit; if (i !== undefined) openEdit(art.games[+i]); });
+$('#art-d-find').addEventListener('click', onEditFind);
+$('#art-d-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onEditFind(); } });
+$('#art-d-results').addEventListener('click', (e) => { const i = e.target.dataset.use; if (i !== undefined) onEditUse(edit.results[+i]); });
+$('#art-dialog').addEventListener('click', (e) => {
+  const fig = e.target.closest('figure[data-kind]');
+  if (!fig || !e.target.dataset.act) return;
+  edit.target = fig.dataset.kind;
+  if (e.target.dataset.act === 'pick') $('#art-d-image').click();
+  else { edit.pending[edit.target] = 'clear'; previewMedia(edit.target, ''); }
+});
+$('#art-d-image').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try { const img = await S.prepareImage(f, edit.target); edit.pending[edit.target] = img; previewMedia(edit.target, img.blob); }
+  catch { $('#art-d-msg').textContent = 'No pude abrir esa imagen. Probá con un .png o .jpg.'; }
+});
+$('#art-d-translate').addEventListener('click', async () => {
+  const d = $('#art-d-desc'), msg = $('#art-d-msg');
+  const lang = await S.detectLang(d.value);
+  if (!lang || lang === 'es') { msg.textContent = 'La descripción ya está en español (o es muy corta para saberlo).'; return; }
+  if (!(await prepareTranslation())) return;
+  msg.textContent = 'Traduciendo…';
+  const t = await S.translate(d.value, lang);
+  msg.textContent = t ? 'Traducida. Revisala y tocá Guardar.' : 'No se pudo traducir.';
+  if (t) d.value = t;
+});
+$('#art-form').addEventListener('submit', async (e) => {
+  if (e.submitter?.value !== 'save') return;
+  e.preventDefault();
+  const btn = $('#art-d-save'); btn.disabled = true;
+  try { await onEditSave(); $('#art-dialog').close(); toast('Guardado. La consola lo va a mostrar la próxima vez que la prendas.', 'ok'); renderArt(); updateArtStatus(); }
+  catch (err) { $('#art-d-msg').textContent = `No se pudo guardar: ${err.message || explainError(err)}`; }
+  btn.disabled = false;
+});
+
 
 checkBrowser();

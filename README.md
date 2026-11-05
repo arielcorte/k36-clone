@@ -6,7 +6,9 @@ Herramientas para la consola portátil **K36 clon** (Allwinner A33) que viene co
 
 ## Cargador de juegos (web)
 
-**https://k36.arielcorte.com**: página para agregar y quitar juegos de la tarjeta SD desde Windows, y para respaldar partidas. Funciona en Chrome o Edge y no instala nada: usa la File System Access API sobre la partición `GAMES` (FAT32) de la tarjeta. El código está en [`docs/`](docs/).
+**https://k36.arielcorte.com**: página para agregar y quitar juegos de la tarjeta SD desde Windows, poner carátulas y datos (como el scraper de Batocera, sin necesidad de Wi-Fi en la consola), traducir las descripciones al español y respaldar partidas. Funciona en Chrome o Edge y no instala nada: usa la File System Access API sobre la partición `GAMES` (FAT32) de la tarjeta. El código está en [`docs/`](docs/).
+
+Las carátulas salen de [libretro-database](https://github.com/libretro/libretro-database) y [libretro-thumbnails](https://github.com/libretro-thumbnails), y las descripciones de Wikipedia. Se guardan en `images/` y `gamelist.xml` con los mismos nombres que usa EmulationStation de Batocera.
 
 Funciona con cualquier Batocera configurado para tomar `roms/` (y opcionalmente `saves/`) de una partición FAT32, con `sharedevice=DEVICES` en `batocera-boot.conf`. La explicación completa está en la página.
 
