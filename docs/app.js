@@ -229,33 +229,58 @@ function candidatesFor(ext) {
   });
 }
 
+const baseName = (path) => path.split(/[\\/]/).pop();
+const sameName = (a, b) => a.toLowerCase() === b.toLowerCase();
+const DISC_EXTS = new Set(['bin', 'iso', 'img']);
+
+// Lee el comienzo de un disco y reconoce la consola por la firma que trae grabada.
+async function sniffDisc(file) {
+  const text = new TextDecoder('latin1').decode(await file.slice(0, 20 * 2352).arrayBuffer());
+  if (text.includes('SEGADISCSYSTEM')) return 'segacd';
+  if (text.includes('SEGA SEGASATURN')) return 'saturn';
+  if (text.includes('PSP GAME')) return 'psp';
+  if (text.includes('PLAYSTATION')) return 'psx';
+  return null;
+}
+
 async function addFiles(files) {
+  const added = [];
   for (const file of files) {
     if (queue.some((q) => q.file.name === file.name && q.file.size === file.size)) continue;
     const ext = extOf(file.name);
-    const item = { file, ext, candidates: candidatesFor(ext), system: null, state: 'pending', msg: '', refs: [] };
+    const item = { file, ext, candidates: candidatesFor(ext), system: null, state: 'pending', msg: '', refs: [], owner: null };
     if (file.size > FAT32_MAX) { item.state = 'error'; item.msg = 'Pesa más de 4 GB y la tarjeta (FAT32) no admite archivos tan grandes.'; }
     else if (!item.candidates.length) { item.state = 'error'; item.msg = `Ninguna consola de la tarjeta usa archivos .${ext || '(sin extensión)'}.`; }
     else if (item.candidates.length === 1) item.system = item.candidates[0];
-    else if (item.candidates.includes(lastChoice[ext])) item.system = lastChoice[ext];
     if (['cue', 'm3u'].includes(ext)) {
       const text = await file.text();
-      item.refs = ext === 'cue'
+      item.refs = (ext === 'cue'
         ? [...text.matchAll(/FILE\s+"([^"]+)"/gi)].map((m) => m[1])
-        : text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+        : text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))).map(baseName);
     }
     queue.push(item);
+    added.push(item);
+  }
+  linkDiscFiles();
+  for (const item of added.filter((q) => q.state === 'pending' && !q.system && !q.owner)) {
+    const disc = item.ext === 'cue'
+      ? queue.find((q) => item.refs[0] && sameName(q.file.name, item.refs[0]))
+      : DISC_EXTS.has(item.ext) ? item : null;
+    const found = disc && (await sniffDisc(disc.file));
+    if (item.candidates.includes(found)) item.system = found;
+    else if (item.candidates.includes(lastChoice[item.ext])) item.system = lastChoice[item.ext];
   }
   linkDiscFiles();
   renderQueue();
 }
 
-// Los .bin de un .cue van a la misma consola que el .cue.
+// Los .bin de un .cue (y los discos de un .m3u) van a la misma consola que el índice.
 function linkDiscFiles() {
   for (const owner of queue.filter((q) => q.refs.length)) {
-    for (const ref of owner.refs) {
-      const part = queue.find((q) => q.file.name === ref);
-      if (part && owner.system && part.candidates.includes(owner.system)) part.system = owner.system;
+    for (const part of queue.filter((q) => q !== owner && owner.refs.some((r) => sameName(r, q.file.name)))) {
+      if (part.owner && part.owner !== owner) continue;
+      part.owner = owner;
+      part.system = owner.system;
     }
   }
 }
@@ -264,8 +289,9 @@ function itemWarning(item) {
   if (item.state === 'error') return '';
   const notes = [];
   if (item.system && WEAK.has(item.system)) notes.push(`Los juegos de ${sysName(item.system)} suelen andar mal en esta consola.`);
-  const missing = item.refs.filter((r) => !queue.some((q) => q.file.name === r));
+  const missing = item.refs.filter((r) => !queue.some((q) => sameName(q.file.name, r)));
   if (missing.length && item.ext === 'cue') notes.push(`Este .cue necesita también ${missing.join(', ')}. Agregalos en el mismo paso.`);
+  if (['zip', '7z'].includes(item.ext) && item.state === 'pending') notes.push(`Si es un juego de PlayStation (o de otra consola de discos), no lo cargues comprimido: la consola no lo va a reconocer. Descomprimilo y agregá el .cue con sus .bin, o convertilo a .chd.`);
   return notes.join(' ');
 }
 
@@ -274,16 +300,18 @@ function renderQueue() {
   box.innerHTML = '';
   queue.forEach((item, i) => {
     const el = document.createElement('li');
-    const needs = item.state === 'pending' && !item.system;
+    const needs = item.state === 'pending' && !item.system && !item.owner;
     if (needs) el.className = 'needs';
     let right = '';
-    if (item.state === 'pending' && item.candidates.length > 1) {
+    if (item.state === 'pending' && item.candidates.length > 1 && !item.owner) {
       right = `<select data-i="${i}" aria-label="Consola de ${esc(item.file.name)}"><option value="">¿De qué consola es?</option>${item.candidates
         .map((c) => `<option value="${c}" ${c === item.system ? 'selected' : ''}>${esc(sysName(c))}</option>`).join('')}</select>`;
     }
     if (item.state === 'pending' || item.state === 'error') right += ` <button class="x" data-del="${i}">Quitar</button>`;
     const stateText = {
-      pending: item.system ? `Va a ${sysName(item.system)}` : 'Elegí la consola',
+      pending: item.owner
+        ? (item.system ? `Va con ${item.owner.file.name} a ${sysName(item.system)}` : `Va con ${item.owner.file.name}: elegí la consola ahí`)
+        : (item.system ? `Va a ${sysName(item.system)}` : 'Elegí la consola'),
       copying: 'Copiando…', done: `Copiado a roms/${item.system}/`, skipped: 'Salteado: ya estaba en la tarjeta', error: item.msg,
     }[item.state];
     const warn = itemWarning(item);
@@ -557,12 +585,21 @@ $('#queue').addEventListener('change', (e) => {
   if (!e.target.matches('select')) return;
   const item = queue[+e.target.dataset.i];
   item.system = e.target.value || null;
-  if (item.system) { lastChoice[item.ext] = item.system; localStorage.setItem('k36-last-choice', JSON.stringify(lastChoice)); }
+  if (item.system) {
+    lastChoice[item.ext] = item.system;
+    localStorage.setItem('k36-last-choice', JSON.stringify(lastChoice));
+    for (const q of queue) {
+      if (q.state === 'pending' && !q.system && !q.owner && q.ext === item.ext && q.candidates.includes(item.system)) q.system = item.system;
+    }
+  }
   linkDiscFiles(); renderQueue();
 });
 $('#queue').addEventListener('click', (e) => {
   const i = e.target.dataset.del;
-  if (i !== undefined) { queue.splice(+i, 1); renderQueue(); }
+  if (i === undefined) return;
+  const [gone] = queue.splice(+i, 1);
+  for (const q of queue.filter((q) => q.owner === gone)) { q.owner = null; q.system = q.candidates.length === 1 ? q.candidates[0] : null; }
+  linkDiscFiles(); renderQueue();
 });
 $('#copy-all').addEventListener('click', onCopyAll);
 $('#clear-queue').addEventListener('click', () => {

@@ -214,7 +214,8 @@ roms.download_enabled=1</pre>
           <p>Borrá los juegos que no uses desde Quitar juegos. Las carpetas de PSP, Nintendo DS y Dreamcast ocupan mucho y casi no se pueden jugar en esta consola.</p>
         </details>
         <details><summary>Juegos de PlayStation con archivos .cue y .bin</summary>
-          <p>Agregá todos los archivos del juego juntos. El <code>.cue</code> es el índice y los <code>.bin</code> son el disco. Un <code>.chd</code> es un solo archivo, más chico, y anda igual.</p>
+          <p>Agregá todos los archivos del juego juntos. El <code>.cue</code> es el índice y los <code>.bin</code> son el disco: la página reconoce los discos de PlayStation y manda los <code>.bin</code> a la misma carpeta que su <code>.cue</code>.</p>
+          <p>No los cargues en <code>.7z</code> ni <code>.zip</code>: la consola no lee discos comprimidos. Si querés ahorrar espacio, convertí el juego a <code>.chd</code> con <code>chdman</code> (viene con MAME): <code>chdman createcd -i "Juego.cue" -o "Juego.chd"</code>. Queda un solo archivo, ocupa más o menos lo mismo que el <code>.7z</code> y anda igual.</p>
         </details>
         <details><summary>Cómo restaurar una copia de partidas</summary>
           <p>Descomprimí el .zip y copiá su contenido a la raíz de la unidad GAMES, aceptando reemplazar archivos. Las carpetas del .zip (<code>downloads</code>, <code>roms</code>, <code>saves</code>) son las mismas que las de la tarjeta.</p>
